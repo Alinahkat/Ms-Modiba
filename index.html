@@ -3,55 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Admin Panel | All"Apps</title>
     <style>
-        :root { --green: #10b981; --red: #ef4444; --bg: #f9fafb; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 40px; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        h2 { margin-top: 40px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
-        .card { 
-            background: white; padding: 20px; border-radius: 16px; 
-            margin-bottom: 12px; display: flex; justify-content: space-between; 
-            align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            border: 1px solid #eee;
-        }
-
-        .info strong { font-size: 1.1rem; display: block; }
-        .info small { color: #666; }
-
-        .btns { display: flex; gap: 8px; }
-        button { 
-            border: none; padding: 10px 16px; border-radius: 10px; 
-            font-weight: 600; cursor: pointer; transition: 0.2s; 
-        }
-
-        .btn-approve { background: var(--green); color: white; }
-        .btn-delete { background: #fee2e2; color: var(--red); }
-        .btn-store { background: #000; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; }
-        
-        .status-tag { 
-            font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; 
-            text-transform: uppercase; font-weight: 800; margin-bottom: 5px; display: inline-block;
-        }
-        .tag-pending { background: #fef3c7; color: #92400e; }
-        .tag-live { background: #d1fae5; color: #065f46; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F2F7; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(15px); }
     </style>
 </head>
-<body>
+<body class="p-6 md:p-12">
 
-    <div class="header">
-        <h1>Admin Control Panel</h1>
-        <a href="index.html" class="btn-store">← Back to App Store</a>
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-gray-900">Admin Control</h1>
+                <p class="text-gray-500 font-medium">Review and manage app submissions</p>
+            </div>
+            <a href="index.html" class="inline-flex items-center space-x-2 bg-black text-white px-6 py-3 rounded-2xl font-bold hover:bg-gray-800 transition shadow-lg">
+                <i class="fa-solid fa-arrow-left"></i> <span>Back to Store</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-1">Queue</p>
+                <h2 class="text-3xl font-black" id="pending-count">0</h2>
+                <p class="text-gray-400 text-sm">Pending Approval</p>
+            </div>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                <p class="text-xs font-bold text-green-500 uppercase tracking-widest mb-1">Published</p>
+                <h2 class="text-3xl font-black" id="live-count">0</h2>
+                <p class="text-gray-400 text-sm">Live on Store</p>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-black mb-6 px-2">Pending Submissions</h2>
+        <div id="pending-grid" class="grid grid-cols-1 gap-4 mb-12">
+            <div class="text-center py-20 bg-gray-100 rounded-[2rem] border-2 border-dashed border-gray-200 text-gray-400">
+                Fetching data...
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-black mb-6 px-2">Published Apps</h2>
+        <div id="live-grid" class="grid grid-cols-1 gap-4">
+            </div>
     </div>
-
-    <h2>Pending Submissions</h2>
-    <div id="pending-list">Loading...</div>
-
-    <h2>Live Apps</h2>
-    <div id="live-list">Loading...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -70,70 +67,85 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        function renderDashboard() {
-            onValue(ref(db, 'apps'), (snapshot) => {
-                const pendingDiv = document.getElementById('pending-list');
-                const liveDiv = document.getElementById('live-list');
-                
-                pendingDiv.innerHTML = "";
-                liveDiv.innerHTML = "";
-                
-                const data = snapshot.val();
-                if (!data) {
-                    pendingDiv.innerHTML = "<p>No apps pending.</p>";
-                    liveDiv.innerHTML = "<p>No apps live.</p>";
-                    return;
+        const pendingGrid = document.getElementById('pending-grid');
+        const liveGrid = document.getElementById('live-grid');
+        const pendingCountText = document.getElementById('pending-count');
+        const liveCountText = document.getElementById('live-count');
+
+        // Main sync function
+        onValue(ref(db, 'apps'), (snapshot) => {
+            const data = snapshot.val();
+            pendingGrid.innerHTML = "";
+            liveGrid.innerHTML = "";
+            
+            let pCount = 0;
+            let lCount = 0;
+
+            if (!data) {
+                pendingGrid.innerHTML = "<p class='p-8 text-gray-400'>No pending requests found.</p>";
+                return;
+            }
+
+            Object.keys(data).forEach(id => {
+                const app = data[id];
+                const card = createAdminCard(id, app);
+
+                if (app.isConfirmed) {
+                    liveGrid.appendChild(card);
+                    lCount++;
+                } else {
+                    pendingGrid.appendChild(card);
+                    pCount++;
                 }
-
-                let pCount = 0;
-                let lCount = 0;
-
-                Object.keys(data).forEach(id => {
-                    const item = data[id];
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    
-                    const content = `
-                        <div class="info">
-                            <span class="status-tag ${item.isConfirmed ? 'tag-live' : 'tag-pending'}">
-                                ${item.isConfirmed ? 'Live' : 'Needs Approval'}
-                            </span>
-                            <strong>${item.name}</strong>
-                            <small>${item.downloadUrl}</small>
-                        </div>
-                        <div class="btns">
-                            ${!item.isConfirmed ? `<button class="btn-approve" onclick="approveApp('${id}')">Approve</button>` : ''}
-                            <button class="btn-delete" onclick="deleteApp('${id}')">Delete</button>
-                        </div>
-                    `;
-                    card.innerHTML = content;
-
-                    if (item.isConfirmed) {
-                        liveDiv.appendChild(card);
-                        lCount++;
-                    } else {
-                        pendingDiv.appendChild(card);
-                        pCount++;
-                    }
-                });
-
-                if (pCount === 0) pendingDiv.innerHTML = "<p>✅ All caught up!</p>";
-                if (lCount === 0) liveDiv.innerHTML = "<p>No live apps yet.</p>";
             });
+
+            pendingCountText.innerText = pCount;
+            liveCountText.innerText = lCount;
+            
+            if (pCount === 0) pendingGrid.innerHTML = "<div class='p-12 text-center bg-white rounded-[2rem] text-gray-400 font-bold'>✨ Everything is reviewed!</div>";
+        });
+
+        function createAdminCard(id, app) {
+            const div = document.createElement('div');
+            div.className = "bg-white p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border border-transparent hover:border-blue-200 transition";
+            
+            div.innerHTML = `
+                <div class="flex items-center space-x-6 w-full md:w-auto">
+                    <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-2xl">
+                        <i class="fa-solid fa-rocket"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-lg">${app.name}</h3>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">${app.category || 'General'}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                    <button onclick="deleteApp('${id}')" class="px-5 py-2.5 rounded-xl font-bold text-sm text-red-500 hover:bg-red-50 transition">
+                        Reject
+                    </button>
+                    ${!app.isConfirmed ? `
+                        <button onclick="approveApp('${id}')" class="px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 transition">
+                            Approve
+                        </button>
+                    ` : `
+                        <span class="px-4 py-2 bg-green-50 text-green-600 rounded-xl font-bold text-xs uppercase tracking-widest">Active</span>
+                    `}
+                </div>
+            `;
+            return div;
         }
 
-        // Global functions
+        // Global functions for buttons
         window.approveApp = (id) => {
-            update(ref(db, 'apps/' + id), { isConfirmed: true });
+            update(ref(db, `apps/${id}`), { isConfirmed: true });
         };
 
         window.deleteApp = (id) => {
-            if (confirm("Permanently remove this app?")) {
-                remove(ref(db, 'apps/' + id));
+            if (confirm("Are you sure you want to remove this app submission?")) {
+                remove(ref(db, `apps/${id}`));
             }
         };
-
-        renderDashboard();
     </script>
 </body>
 </html>
