@@ -2,46 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard | Direct Access</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7f6; padding: 40px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .logo-text { font-weight: 800; font-size: 1.5rem; color: #000; }
+        :root { --green: #10b981; --red: #ef4444; --bg: #f9fafb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 40px; }
         
-        .pending-item { 
-            background: white; padding: 20px; border-radius: 15px; 
-            margin-bottom: 10px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid #eee; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        h2 { margin-top: 40px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        .card { 
+            background: white; padding: 20px; border-radius: 16px; 
+            margin-bottom: 12px; display: flex; justify-content: space-between; 
+            align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            border: 1px solid #eee;
         }
 
-        .actions { display: flex; gap: 10px; }
-        
-        .btn { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .approve-btn { background: #10b981; color: white; }
-        .approve-btn:hover { background: #059669; }
-        
-        .reject-btn { background: #fee2e2; color: #ef4444; }
-        .reject-btn:hover { background: #fecaca; }
+        .info strong { font-size: 1.1rem; display: block; }
+        .info small { color: #666; }
 
-        #list { min-height: 200px; }
-        .empty-msg { text-align: center; color: #666; margin-top: 50px; }
+        .btns { display: flex; gap: 8px; }
+        button { 
+            border: none; padding: 10px 16px; border-radius: 10px; 
+            font-weight: 600; cursor: pointer; transition: 0.2s; 
+        }
+
+        .btn-approve { background: var(--green); color: white; }
+        .btn-delete { background: #fee2e2; color: var(--red); }
+        .btn-store { background: #000; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; }
+        
+        .status-tag { 
+            font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; 
+            text-transform: uppercase; font-weight: 800; margin-bottom: 5px; display: inline-block;
+        }
+        .tag-pending { background: #fef3c7; color: #92400e; }
+        .tag-live { background: #d1fae5; color: #065f46; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div>
-            <div class="logo-text">App Hub Admin</div>
-            <p style="margin: 5px 0 0 0; color: #666;">Direct Management Mode</p>
-        </div>
-        <button onclick="location.href='index.html'" style="background:black; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">View Live Store</button>
-    </header>
+    <div class="header">
+        <h1>Admin Control Panel</h1>
+        <a href="index.html" class="btn-store">← Back to App Store</a>
+    </div>
 
-    <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 30px;">
+    <h2>Pending Submissions</h2>
+    <div id="pending-list">Loading...</div>
 
-    <div id="list">Loading submissions...</div>
+    <h2>Live Apps</h2>
+    <div id="live-list">Loading...</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -60,60 +70,70 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Core logic starts immediately
-        function fetchSubmissions() {
+        function renderDashboard() {
             onValue(ref(db, 'apps'), (snapshot) => {
-                const list = document.getElementById('list');
-                list.innerHTML = "";
-                const data = snapshot.val();
+                const pendingDiv = document.getElementById('pending-list');
+                const liveDiv = document.getElementById('live-list');
                 
-                if(!data) { 
-                    list.innerHTML = "<div class='empty-msg'>No apps found in database.</div>"; 
-                    return; 
+                pendingDiv.innerHTML = "";
+                liveDiv.innerHTML = "";
+                
+                const data = snapshot.val();
+                if (!data) {
+                    pendingDiv.innerHTML = "<p>No apps pending.</p>";
+                    liveDiv.innerHTML = "<p>No apps live.</p>";
+                    return;
                 }
 
-                let pendingCount = 0;
+                let pCount = 0;
+                let lCount = 0;
+
                 Object.keys(data).forEach(id => {
-                    // We only show apps that haven't been confirmed yet
-                    if(data[id].isConfirmed === false) {
-                        pendingCount++;
-                        const div = document.createElement('div');
-                        div.className = 'pending-item';
-                        div.innerHTML = `
-                            <div>
-                                <strong style="font-size: 1.1rem;">${data[id].name}</strong><br>
-                                <small style="color: #888;">Source: ${data[id].downloadUrl}</small>
-                            </div>
-                            <div class="actions">
-                                <button class="btn reject-btn" onclick="rejectApp('${id}')">Delete</button>
-                                <button class="btn approve-btn" onclick="approveApp('${id}')">Confirm & Publish</button>
-                            </div>
-                        `;
-                        list.appendChild(div);
+                    const item = data[id];
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    const content = `
+                        <div class="info">
+                            <span class="status-tag ${item.isConfirmed ? 'tag-live' : 'tag-pending'}">
+                                ${item.isConfirmed ? 'Live' : 'Needs Approval'}
+                            </span>
+                            <strong>${item.name}</strong>
+                            <small>${item.downloadUrl}</small>
+                        </div>
+                        <div class="btns">
+                            ${!item.isConfirmed ? `<button class="btn-approve" onclick="approveApp('${id}')">Approve</button>` : ''}
+                            <button class="btn-delete" onclick="deleteApp('${id}')">Delete</button>
+                        </div>
+                    `;
+                    card.innerHTML = content;
+
+                    if (item.isConfirmed) {
+                        liveDiv.appendChild(card);
+                        lCount++;
+                    } else {
+                        pendingDiv.appendChild(card);
+                        pCount++;
                     }
                 });
 
-                if(pendingCount === 0) {
-                    list.innerHTML = "<div class='empty-msg'>✨ All apps are reviewed! No new submissions.</div>";
-                }
+                if (pCount === 0) pendingDiv.innerHTML = "<p>✅ All caught up!</p>";
+                if (lCount === 0) liveDiv.innerHTML = "<p>No live apps yet.</p>";
             });
         }
 
-        // Global functions for buttons
+        // Global functions
         window.approveApp = (id) => {
-            update(ref(db, 'apps/' + id), { isConfirmed: true })
-            .catch(err => alert("Error: " + err.message));
+            update(ref(db, 'apps/' + id), { isConfirmed: true });
         };
 
-        window.rejectApp = (id) => {
-            if(confirm("Permanently delete this submission?")) {
-                remove(ref(db, 'apps/' + id))
-                .catch(err => alert("Error: " + err.message));
+        window.deleteApp = (id) => {
+            if (confirm("Permanently remove this app?")) {
+                remove(ref(db, 'apps/' + id));
             }
         };
 
-        // Initialize
-        fetchSubmissions();
+        renderDashboard();
     </script>
 </body>
 </html>
