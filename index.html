@@ -12,29 +12,31 @@
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); }
         .card-entry { animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Modern Toast Style */
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
-        .loading-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="pb-20 opacity-0" id="admin-body">
 
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white text-3xl mb-6 shadow-2xl shadow-blue-200">
-            <i class="fa-solid fa-fingerprint"></i>
+        <div class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white text-3xl mb-6 shadow-2xl shadow-blue-200">
+            <i class="fa-solid fa-lock"></i>
         </div>
-        <h2 class="text-3xl font-black tracking-tighter mb-2">Admin Panel</h2>
-        <p class="text-gray-400 mb-8 max-w-xs font-medium">Verify your identity via Google to manage the store database.</p>
-        <button id="btn-login" class="flex items-center space-x-4 bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition transform active:scale-95">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="">
-            <span>Sign in with Google</span>
+        <h2 class="text-3xl font-black tracking-tighter mb-2">Restricted Access</h2>
+        <p class="text-gray-400 mb-8 max-w-xs font-medium">Please authenticate with your Google account to manage the database.</p>
+        <button id="btn-login" class="flex items-center space-x-4 bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition transform active:scale-95 shadow-xl shadow-gray-200">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="Google">
+            <span>Login with Google</span>
         </button>
     </div>
 
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-[2rem] shadow-2xl shadow-emerald-200 flex items-center space-x-3 opacity-0 pointer-events-none">
-        <i class="fa-solid fa-circle-check text-xl"></i>
-        <span class="font-bold tracking-tight" id="toast-msg">Action Successful</span>
+        <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fa-solid fa-check text-sm"></i>
+        </div>
+        <span class="font-bold tracking-tight" id="toast-msg">Success</span>
     </div>
 
     <nav class="sticky top-0 z-50 glass border-b border-gray-200 px-6 py-4 flex justify-between items-center">
@@ -45,27 +47,28 @@
             <h1 class="text-xl font-black tracking-tighter">Admin"Hub</h1>
         </div>
         <div class="flex items-center space-x-4">
-            <button onclick="logout()" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Sign Out</button>
-            <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit to Store</a>
+            <button onclick="logout()" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout</button>
+            <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit Store</a>
         </div>
     </nav>
 
     <main class="max-w-5xl mx-auto px-6 pt-12">
         <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
             <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
-                <i class="fa-solid fa-bolt text-blue-600 mr-2"></i> Direct Add to Store
+                <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> Add App to Database
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <input type="text" id="admin-app-name" placeholder="App Name" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
                 
                 <div class="relative">
                     <input type="file" id="admin-app-file" accept="image/*" class="hidden">
-                    <button id="upload-trigger" onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> <span id="file-label">Cloud Icon Upload</span>
+                    <button id="upload-trigger" onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent focus:border-blue-500">
+                        <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload Icon</span>
                     </button>
                 </div>
 
                 <input type="text" id="admin-app-url" placeholder="Download URL" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                
                 <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
                     <option value="General">Select Category</option>
                     <option value="Games">Games</option>
@@ -76,7 +79,7 @@
                     <option value="Entertainment">Entertainment</option>
                 </select>
             </div>
-            <button id="admin-direct-add" class="mt-4 w-full md:w-auto bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-200 flex items-center justify-center">
+            <button id="admin-direct-add" class="mt-4 w-full md:w-auto bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center">
                 <span id="btn-text">Publish Directly</span>
             </button>
         </section>
@@ -116,9 +119,9 @@
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CLOUDINARY CONFIG
+        // CONFIGURATION
         const CLOUD_NAME = "dsbzvgotw";
-        const UPLOAD_PRESET = "modiba"; // <-- CHANGE THIS
+        const UPLOAD_PRESET = "modiba"; // <-- REQUIRED: Add your preset name here
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_lFs83fyT6pNcNECGueOYJeedGVKY7GA",
@@ -137,6 +140,7 @@
 
         let selectedFile = null;
 
+        // UI Feedback Helper
         const showToast = (msg, color = "bg-emerald-500") => {
             const toast = document.getElementById('toast');
             toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none ${color}`;
@@ -145,7 +149,8 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
 
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        // Auth Logic
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider).catch(e => showToast(e.message, "bg-red-500"));
         window.logout = () => signOut(auth);
 
         onAuthStateChanged(auth, (user) => {
@@ -158,11 +163,13 @@
             }
         });
 
+        // File Handler
         document.getElementById('admin-app-file').onchange = (e) => {
             selectedFile = e.target.files[0];
             if (selectedFile) document.getElementById('file-label').innerText = selectedFile.name;
         };
 
+        // Cloudinary Upload Logic
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
@@ -172,10 +179,12 @@
                 method: 'POST',
                 body: formData
             });
+            if(!res.ok) throw new Error("Upload Failed");
             const data = await res.json();
             return data.secure_url;
         }
 
+        // Add App Logic
         document.getElementById('admin-direct-add').onclick = async () => {
             const name = document.getElementById('admin-app-name').value;
             const downloadUrl = document.getElementById('admin-app-url').value;
@@ -183,33 +192,39 @@
             const btn = document.getElementById('admin-direct-add');
 
             if(!name || !downloadUrl || !selectedFile) {
-                return showToast("Fill all fields and select an icon!", "bg-orange-500");
+                return showToast("Please complete all fields", "bg-orange-500");
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Uploading...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...`;
 
             try {
                 const iconUrl = await uploadToCloudinary(selectedFile);
 
                 await push(ref(db, 'apps'), {
-                    name, icon: iconUrl, downloadUrl, category,
+                    name, 
+                    icon: iconUrl, 
+                    downloadUrl, 
+                    category,
                     isConfirmed: true,
                     rating: "5.0"
                 });
                 
-                showToast("App published to Cloudinary & Store!");
-                document.querySelectorAll('input').forEach(i => i.value = "");
-                document.getElementById('file-label').innerText = "Cloud Icon Upload";
+                showToast("App Successfully Published!");
+                // Reset form
+                document.getElementById('admin-app-name').value = "";
+                document.getElementById('admin-app-url').value = "";
+                document.getElementById('file-label').innerText = "Upload Icon";
                 selectedFile = null;
             } catch (err) {
-                showToast("Upload failed!", "bg-red-500");
+                showToast("Cloudinary Upload Failed", "bg-red-500");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = "Publish Directly";
             }
         };
 
+        // Realtime Data Sync
         onValue(ref(db, 'apps'), (snapshot) => {
             const data = snapshot.val();
             const pList = document.getElementById('pending-list');
@@ -222,7 +237,7 @@
 
             if(!data) {
                 pStat.innerText = 0; aStat.innerText = 0;
-                pList.innerHTML = `<div class="p-10 text-center bg-white rounded-[2rem] text-gray-400 font-bold">Database is empty</div>`;
+                pList.innerHTML = `<div class="p-10 text-center bg-white rounded-[2rem] text-gray-300 font-bold uppercase tracking-widest">Empty Database</div>`;
                 return;
             }
 
@@ -238,8 +253,8 @@
                             </div>
                         </div>
                         <div class="flex space-x-2 ml-4">
-                            <button onclick="deleteApp('${id}')" class="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button>
-                            ${!item.isConfirmed ? `<button onclick="approveApp('${id}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-lg shadow-blue-100 hover:bg-blue-700 transition">Approve</button>` : ''}
+                            <button onclick="deleteApp('${id}')" class="w-10 h-10 flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button>
+                            ${!item.isConfirmed ? `<button onclick="approveApp('${id}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-blue-700 transition">Approve</button>` : ''}
                         </div>
                     </div>`;
 
@@ -248,18 +263,19 @@
             });
 
             pStat.innerText = pCount; aStat.innerText = aCount;
-            if(pCount === 0) pList.innerHTML = `<div class="p-12 text-center bg-white rounded-[2rem] text-gray-300 font-black italic uppercase tracking-widest">✨ All Reviewed</div>`;
+            if(pCount === 0) pList.innerHTML = `<div class="p-12 text-center bg-white rounded-[2rem] text-gray-300 font-black italic uppercase tracking-widest">✨ Inbox Zero</div>`;
         });
 
+        // Action Handlers
         window.approveApp = (id) => {
             update(ref(db, `apps/${id}`), { isConfirmed: true });
             showToast("App Approved!");
         };
         
         window.deleteApp = (id) => {
-            if(confirm("Permanently remove this entry?")) {
+            if(confirm("Permanently delete this record?")) {
                 remove(ref(db, `apps/${id}`));
-                showToast("Entry Deleted");
+                showToast("Record Deleted", "bg-gray-800");
             }
         };
     </script>
