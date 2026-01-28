@@ -73,7 +73,7 @@
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <h1 class="text-xl font-black tracking-tighter">Admin"Hub</h1>
+                <h1 class="text-xl font-black tracking-tighter">Admin Hub</h1>
             </div>
             <button id="btn-logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout Account</button>
         </nav>
@@ -130,7 +130,7 @@
                     <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
                     <span>Carousel / Featured Banner</span>
                 </h3>
-                <div id="carousel-list" class="flex flex-wrap gap-3 mb-6"></div>
+                <div id="carousel-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
             </section>
 
             <div class="grid grid-cols-2 gap-4 mb-12">
@@ -308,7 +308,6 @@
 
                 if(editingId) {
                     await update(ref(db, `apps/${editingId}`), appData);
-                    // Update Carousel if it exists there too
                     const featuredSnap = await get(ref(db, `featured/${editingId}`));
                     if(featuredSnap.exists()) {
                          await update(ref(db, `featured/${editingId}`), {
@@ -337,7 +336,6 @@
                 const snapshot = await get(ref(db, `apps/${id}`));
                 const appData = snapshot.val();
                 if(appData) {
-                    // Ensure carousel banner matches the app banner exactly
                     await set(ref(db, `featured/${id}`), {
                         name: appData.name || "Featured App",
                         description: appData.description || "",
@@ -364,13 +362,21 @@
             if(data) {
                 Object.keys(data).forEach(id => {
                     const item = data[id];
+                    // Updated to show the BANNER image for better visual match with the user store
                     list.innerHTML += `
-                        <div class="bg-gray-100 px-4 py-2 rounded-xl flex items-center space-x-3 border border-gray-200">
-                            <img src="${item.icon || ''}" class="w-6 h-6 rounded-md object-cover">
-                            <span class="text-xs font-bold">${item.name || 'App'}</span>
-                            <button onclick="window.removeFromCarousel('${id}')" class="text-red-500 hover:text-red-700 ml-2">
-                                <i class="fa-solid fa-circle-xmark"></i>
-                            </button>
+                        <div class="relative group bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+                            <img src="${item.banner || item.icon}" class="w-full h-32 object-cover opacity-80 group-hover:opacity-100 transition">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center space-x-2">
+                                        <img src="${item.icon}" class="w-6 h-6 rounded-md object-cover border border-white/20">
+                                        <span class="text-xs font-bold text-white truncate max-w-[100px]">${item.name}</span>
+                                    </div>
+                                    <button onclick="window.removeFromCarousel('${id}')" class="bg-white/20 backdrop-blur-md text-white w-8 h-8 rounded-full hover:bg-red-500 transition flex items-center justify-center">
+                                        <i class="fa-solid fa-xmark text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>`;
                 });
             }
@@ -453,7 +459,7 @@
         document.getElementById('confirm-delete-btn').onclick = async () => {
             if(pendingDeleteId) {
                 await remove(ref(db, `apps/${pendingDeleteId}`));
-                await remove(ref(db, `featured/${pendingDeleteId}`)); // Cleanup carousel too
+                await remove(ref(db, `featured/${pendingDeleteId}`)); 
                 closeModal('delete-modal');
                 showToast("App Deleted Successfully", "bg-red-500");
                 pendingDeleteId = null;
