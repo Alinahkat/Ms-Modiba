@@ -25,7 +25,6 @@
             <h1 class="text-xl font-black tracking-tighter text-gray-900">Admin"Hub</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <button onclick="window.handleLogout()" class="text-xs font-bold text-red-500 hover:text-red-700 transition px-2">Logout</button>
             <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit to Store</a>
         </div>
     </nav>
@@ -106,7 +105,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_lFs83fyT6pNcNECGueOYJeedGVKY7GA",
@@ -120,23 +118,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const auth = getAuth(app);
         let isInstantLive = false;
-
-        // --- Auth Security Check ---
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = "login.html"; 
-            }
-        });
-
-        window.handleLogout = () => {
-            if(confirm("Are you sure you want to logout?")) {
-                signOut(auth).then(() => {
-                    window.location.href = "login.html";
-                });
-            }
-        };
 
         // --- Helper Functions ---
         window.setPublishMode = (mode) => {
@@ -152,13 +134,14 @@
             const content = document.getElementById('modal-content');
             document.getElementById('modal-message').innerText = msg;
             modal.classList.remove('hidden');
-            setTimeout(() => content.classList.replace('opacity-0', 'opacity-100'), 10);
-            setTimeout(() => content.classList.replace('scale-95', 'scale-100'), 10);
+            setTimeout(() => {
+                content.classList.replace('opacity-0', 'opacity-100');
+                content.classList.replace('scale-95', 'scale-100');
+            }, 10);
         };
 
         window.closeSuccessModal = () => {
-            const modal = document.getElementById('success-modal');
-            modal.classList.add('hidden');
+            document.getElementById('success-modal').classList.add('hidden');
         };
 
         // --- Core App Logic ---
