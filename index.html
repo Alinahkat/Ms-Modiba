@@ -79,14 +79,14 @@
                     <div class="relative">
                         <input type="file" id="admin-app-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
-                            <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload Icon</span>
+                            <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload App Icon</span>
                         </button>
                     </div>
 
                     <div class="relative">
                         <input type="file" id="admin-banner-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-banner-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
-                            <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">Upload Banner (Carousel)</span>
+                            <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">Upload Wide Banner</span>
                         </button>
                     </div>
 
@@ -178,7 +178,6 @@
         let currentIconUrl = null;
         let currentBannerUrl = null;
 
-        // Modal Logic
         window.openModal = (msg) => {
             const modal = document.getElementById('success-modal');
             document.getElementById('success-modal-msg').innerText = msg;
@@ -250,8 +249,8 @@
             document.getElementById('admin-app-name').value = "";
             document.getElementById('admin-app-url').value = "";
             document.getElementById('admin-app-cat').value = "General";
-            document.getElementById('file-label').innerText = "Upload Icon";
-            document.getElementById('banner-label').innerText = "Upload Banner (Carousel)";
+            document.getElementById('file-label').innerText = "Upload App Icon";
+            document.getElementById('banner-label').innerText = "Upload Wide Banner";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -272,19 +271,15 @@
 
             try {
                 let iconUrl = currentIconUrl;
-                if(selectedFile) {
-                    iconUrl = await uploadToCloudinary(selectedFile);
-                }
+                if(selectedFile) iconUrl = await uploadToCloudinary(selectedFile);
 
                 let bannerUrl = currentBannerUrl;
-                if(selectedBannerFile) {
-                    bannerUrl = await uploadToCloudinary(selectedBannerFile);
-                }
+                if(selectedBannerFile) bannerUrl = await uploadToCloudinary(selectedBannerFile);
 
                 const appData = {
                     name, 
                     icon: iconUrl, 
-                    banner: bannerUrl || iconUrl, // Use icon if no banner provided
+                    banner: bannerUrl || iconUrl, // Fallback if no banner provided
                     downloadUrl: url, 
                     category: cat, 
                     isConfirmed: true, 
@@ -293,10 +288,10 @@
 
                 if(editingId) {
                     await update(ref(db, `apps/${editingId}`), appData);
-                    window.openModal(`${name} has been updated successfully.`);
+                    window.openModal(`${name} updated successfully.`);
                 } else {
                     await push(ref(db, 'apps'), appData);
-                    window.openModal(`${name} has been published to the live store.`);
+                    window.openModal(`${name} published to Live Store.`);
                 }
                 resetForm();
             } catch (e) {
@@ -306,15 +301,15 @@
             }
         };
 
-        // Carousel Management Logic
         window.addToCarousel = async (id) => {
             const snapshot = await get(ref(db, `apps/${id}`));
             const app = snapshot.val();
             if(app) {
+                // We send both the icon and banner to the featured node
                 await set(ref(db, `featured/${id}`), {
                     name: app.name,
                     icon: app.icon,
-                    banner: app.banner || app.icon,
+                    banner: app.banner || app.icon, 
                     category: app.category,
                     appId: id
                 });
@@ -327,7 +322,6 @@
             showToast("Removed from Carousel", "bg-gray-700");
         };
 
-        // Sync Data
         onValue(ref(db, 'featured'), (snap) => {
             const data = snap.val();
             const list = document.getElementById('carousel-list');
@@ -402,7 +396,7 @@
 
         window.approveApp = (id) => {
             update(ref(db, `apps/${id}`), { isConfirmed: true });
-            window.openModal("Application approved and moved to Live Store.");
+            window.openModal("Approved and moved to Live Store.");
         };
         
         window.deleteApp = (id) => confirm("Delete permanently?") && remove(ref(db, `apps/${id}`));
