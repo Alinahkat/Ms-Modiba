@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Admin"Hub | Management</title>
+    <title>Admin Hub | Management</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F2F7; }
@@ -16,9 +16,9 @@
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
 
-        #success-modal { transition: opacity 0.3s ease; }
-        #success-modal-content { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #success-modal.flex #success-modal-content { transform: scale(1); }
+        .modal-animate { transition: opacity 0.3s ease; }
+        .modal-content-animate { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .flex .modal-content-animate { transform: scale(1); }
     </style>
 </head>
 <body class="pb-20">
@@ -35,14 +35,28 @@
         </button>
     </div>
 
-    <div id="success-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0">
-        <div id="success-modal-content" class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl">
+    <div id="success-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0 modal-animate">
+        <div id="success-modal-content" class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl modal-content-animate">
             <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
                 <i class="fa-solid fa-check"></i>
             </div>
             <h3 class="text-2xl font-black tracking-tighter mb-2">Operation Successful</h3>
             <p class="text-gray-500 font-medium mb-8" id="success-modal-msg">The database has been updated.</p>
-            <button onclick="closeModal()" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition active:scale-95">Dismiss</button>
+            <button onclick="closeModal('success-modal')" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition active:scale-95">Dismiss</button>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0 modal-animate">
+        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl modal-content-animate">
+            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-2xl font-black tracking-tighter mb-2">Are you sure?</h3>
+            <p class="text-gray-500 font-medium mb-8">This action cannot be undone. This app will be removed from the store forever.</p>
+            <div class="flex flex-col gap-3">
+                <button id="confirm-delete-btn" class="w-full bg-red-500 text-white py-4 rounded-2xl font-bold hover:bg-red-600 transition active:scale-95">Yes, Delete App</button>
+                <button onclick="closeModal('delete-modal')" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold hover:bg-gray-200 transition active:scale-95">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -174,6 +188,7 @@
         let editingId = null;
         let currentIconUrl = null;
         let currentBannerUrl = null;
+        let pendingDeleteId = null;
 
         window.openModal = (msg) => {
             const modal = document.getElementById('success-modal');
@@ -183,8 +198,8 @@
             setTimeout(() => modal.classList.add('opacity-100'), 10);
         };
 
-        window.closeModal = () => {
-            const modal = document.getElementById('success-modal');
+        window.closeModal = (id) => {
+            const modal = document.getElementById(id);
             modal.classList.remove('opacity-100');
             setTimeout(() => {
                 modal.classList.add('hidden');
@@ -254,7 +269,6 @@
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             
-            // Explicitly reset processing button state
             const btn = document.getElementById('admin-direct-add');
             btn.disabled = false;
             btn.innerHTML = `<span>Publish Directly</span>`;
@@ -271,7 +285,6 @@
 
             if(!name || !url) return showToast("Name and URL are required", "bg-orange-500");
 
-            // UI Feedback: Start Processing
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...`;
 
@@ -295,18 +308,25 @@
 
                 if(editingId) {
                     await update(ref(db, `apps/${editingId}`), appData);
+                    // Update Carousel if it exists there too
+                    const featuredSnap = await get(ref(db, `featured/${editingId}`));
+                    if(featuredSnap.exists()) {
+                         await update(ref(db, `featured/${editingId}`), {
+                            name: appData.name,
+                            description: appData.description,
+                            icon: appData.icon,
+                            banner: appData.banner,
+                            category: appData.category
+                         });
+                    }
                     window.openModal(`${name} updated successfully.`);
                 } else {
                     await push(ref(db, 'apps'), appData);
                     window.openModal(`${name} published to Live Store.`);
                 }
-                
-                // Success: Reset Everything
                 resetForm();
-
             } catch (e) {
                 showToast("Error: " + e.message, "bg-red-500");
-                // Reset button so user can try again
                 btn.disabled = false;
                 btn.innerHTML = editingId ? `Update Application` : `Publish Directly`;
             }
@@ -315,14 +335,15 @@
         window.addToCarousel = async (id) => {
             try {
                 const snapshot = await get(ref(db, `apps/${id}`));
-                const app = snapshot.val();
-                if(app) {
+                const appData = snapshot.val();
+                if(appData) {
+                    // Ensure carousel banner matches the app banner exactly
                     await set(ref(db, `featured/${id}`), {
-                        name: app.name || "Featured App",
-                        description: app.description || "",
-                        icon: app.icon || "",
-                        banner: app.banner || app.icon || "", 
-                        category: app.category || "General",
+                        name: appData.name || "Featured App",
+                        description: appData.description || "",
+                        icon: appData.icon || "",
+                        banner: appData.banner || appData.icon || "", 
+                        category: appData.category || "General",
                         appId: id
                     });
                     showToast("Added to Carousel");
@@ -421,7 +442,23 @@
             window.openModal("Approved and moved to Live Store.");
         };
         
-        window.deleteApp = (id) => confirm("Delete permanently?") && remove(ref(db, `apps/${id}`));
+        window.deleteApp = (id) => {
+            pendingDeleteId = id;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.add('opacity-100'), 10);
+        };
+
+        document.getElementById('confirm-delete-btn').onclick = async () => {
+            if(pendingDeleteId) {
+                await remove(ref(db, `apps/${pendingDeleteId}`));
+                await remove(ref(db, `featured/${pendingDeleteId}`)); // Cleanup carousel too
+                closeModal('delete-modal');
+                showToast("App Deleted Successfully", "bg-red-500");
+                pendingDeleteId = null;
+            }
+        };
 
     </script>
 </body>
