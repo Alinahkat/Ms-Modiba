@@ -130,6 +130,21 @@
                     <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
                     <span>Carousel / Featured Banner</span>
                 </h3>
+                <div class="mb-8 p-6 bg-orange-50/50 rounded-3xl border border-dashed border-orange-200">
+                    <p class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Add Custom Carousel Image</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select id="carousel-app-select" class="flex-1 px-5 py-3 bg-white rounded-2xl border border-orange-100 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                            <option value="">Select App to Feature</option>
+                        </select>
+                        <input type="file" id="carousel-custom-file" accept="image/*" class="hidden">
+                        <button onclick="document.getElementById('carousel-custom-file').click()" class="px-5 py-3 bg-white border border-orange-200 rounded-2xl text-sm text-gray-600 hover:bg-orange-50 transition">
+                            <i class="fa-solid fa-upload mr-2"></i> <span id="carousel-file-label">Select Image</span>
+                        </button>
+                        <button id="btn-upload-carousel" class="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-orange-600 transition active:scale-95">
+                            Update Carousel
+                        </button>
+                    </div>
+                </div>
                 <div id="carousel-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
             </section>
 
@@ -185,6 +200,7 @@
 
         let selectedFile = null;
         let selectedBannerFile = null;
+        let selectedCarouselFile = null;
         let editingId = null;
         let currentIconUrl = null;
         let currentBannerUrl = null;
@@ -241,6 +257,11 @@
         document.getElementById('admin-banner-file').onchange = (e) => {
             selectedBannerFile = e.target.files[0];
             if (selectedBannerFile) document.getElementById('banner-label').innerText = selectedBannerFile.name;
+        };
+
+        document.getElementById('carousel-custom-file').onchange = (e) => {
+            selectedCarouselFile = e.target.files[0];
+            if (selectedCarouselFile) document.getElementById('carousel-file-label').innerText = selectedCarouselFile.name;
         };
 
         async function uploadToCloudinary(file) {
@@ -331,6 +352,45 @@
             }
         };
 
+        // NEW CAROUSEL UPLOAD LOGIC
+        document.getElementById('btn-upload-carousel').onclick = async () => {
+            const appId = document.getElementById('carousel-app-select').value;
+            const btn = document.getElementById('btn-upload-carousel');
+            
+            if(!appId) return showToast("Please select an app", "bg-orange-500");
+            
+            btn.disabled = true;
+            btn.innerText = "Uploading...";
+
+            try {
+                const snapshot = await get(ref(db, `apps/${appId}`));
+                const appData = snapshot.val();
+                
+                let bannerUrl = appData.banner;
+                if(selectedCarouselFile) {
+                    bannerUrl = await uploadToCloudinary(selectedCarouselFile);
+                }
+
+                await set(ref(db, `featured/${appId}`), {
+                    name: appData.name,
+                    description: appData.description,
+                    icon: appData.icon,
+                    banner: bannerUrl,
+                    category: appData.category,
+                    appId: appId
+                });
+
+                showToast("Carousel updated successfully");
+                selectedCarouselFile = null;
+                document.getElementById('carousel-file-label').innerText = "Select Image";
+            } catch (err) {
+                showToast("Error updating carousel", "bg-red-500");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Update Carousel";
+            }
+        };
+
         window.addToCarousel = async (id) => {
             try {
                 const snapshot = await get(ref(db, `apps/${id}`));
@@ -362,7 +422,6 @@
             if(data) {
                 Object.keys(data).forEach(id => {
                     const item = data[id];
-                    // Updated to show the BANNER image for better visual match with the user store
                     list.innerHTML += `
                         <div class="relative group bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
                             <img src="${item.banner || item.icon}" class="w-full h-32 object-cover opacity-80 group-hover:opacity-100 transition">
@@ -386,13 +445,26 @@
             const data = snap.val();
             const pList = document.getElementById('pending-list');
             const aList = document.getElementById('active-list');
+            const select = document.getElementById('carousel-app-select');
+            
             if(!pList || !aList) return;
             pList.innerHTML = ""; aList.innerHTML = "";
+            select.innerHTML = `<option value="">Select App to Feature</option>`;
+            
             let pCount = 0; let aCount = 0;
 
             if(data) {
                 Object.keys(data).forEach(id => {
                     const item = data[id];
+                    
+                    // Add to dropdown if confirmed
+                    if(item.isConfirmed) {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.innerText = item.name;
+                        select.appendChild(opt);
+                    }
+
                     const card = `
                         <div class="card-entry bg-white p-4 rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
                             <div class="flex items-center space-x-4">
