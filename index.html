@@ -8,17 +8,16 @@
     <title>Admin"Hub | Management</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F2F7; transition: opacity 0.5s ease; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F2F7; }
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); }
         .card-entry { animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Modern Toast Style */
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<body class="pb-20 opacity-0" id="admin-body">
+<body class="pb-20">
 
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 text-center">
         <div class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white text-3xl mb-6 shadow-2xl shadow-blue-200">
@@ -32,96 +31,90 @@
         </button>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-[2rem] shadow-2xl shadow-emerald-200 flex items-center space-x-3 opacity-0 pointer-events-none">
-        <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-            <i class="fa-solid fa-check text-sm"></i>
-        </div>
-        <span class="font-bold tracking-tight" id="toast-msg">Success</span>
-    </div>
-
-    <nav class="sticky top-0 z-50 glass border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm">
-                <i class="fa-solid fa-shield-halved"></i>
+    <div id="admin-content" class="hidden opacity-0 transition-opacity duration-500">
+        <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none">
+            <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-check text-sm"></i>
             </div>
-            <h1 class="text-xl font-black tracking-tighter">Admin"Hub</h1>
+            <span class="font-bold tracking-tight" id="toast-msg">Success</span>
         </div>
-        <div class="flex items-center space-x-4">
-            <button onclick="logout()" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout</button>
-            <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit Store</a>
-        </div>
-    </nav>
 
-    <main class="max-w-5xl mx-auto px-6 pt-12">
-        <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-            <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
-                <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> Add App to Database
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <input type="text" id="admin-app-name" placeholder="App Name" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
-                
-                <div class="relative">
-                    <input type="file" id="admin-app-file" accept="image/*" class="hidden">
-                    <button id="upload-trigger" onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent focus:border-blue-500">
-                        <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload Icon</span>
-                    </button>
+        <nav class="sticky top-0 z-50 glass border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-
-                <input type="text" id="admin-app-url" placeholder="Download URL" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
-                
-                <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
-                    <option value="General">Select Category</option>
-                    <option value="Games">Games</option>
-                    <option value="Apps">Apps</option>
-                    <option value="Arcade">Arcade</option>
-                    <option value="Graphics & Design">Graphics & Design</option>
-                    <option value="Productivity">Productivity</option>
-                    <option value="Entertainment">Entertainment</option>
-                </select>
+                <h1 class="text-xl font-black tracking-tighter">Admin"Hub</h1>
             </div>
-            <button id="admin-direct-add" class="mt-4 w-full md:w-auto bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center">
-                <span id="btn-text">Publish Directly</span>
-            </button>
-        </section>
-
-        <div class="grid grid-cols-2 gap-4 mb-12">
-            <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Incoming</p>
-                <h3 id="stat-pending" class="text-3xl font-black text-orange-500">0</h3>
+            <div class="flex items-center space-x-4">
+                <button id="btn-logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout</button>
+                <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit Store</a>
             </div>
-            <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Live Store</p>
-                <h3 id="stat-live" class="text-3xl font-black text-emerald-500">0</h3>
-            </div>
-        </div>
+        </nav>
 
-        <section class="mb-16">
-            <h3 class="text-2xl font-black mb-8 flex items-center">
-                <span class="w-2 h-6 bg-orange-400 rounded-full mr-3"></span>
-                Review Queue
-            </h3>
-            <div id="pending-list" class="space-y-4">
-                <div class="text-center py-10 text-gray-400">Scanning database...</div>
-            </div>
-        </section>
+        <main class="max-w-5xl mx-auto px-6 pt-12">
+            <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
+                    <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> Add App to Database
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <input type="text" id="admin-app-name" placeholder="App Name" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                    
+                    <div class="relative">
+                        <input type="file" id="admin-app-file" accept="image/*" class="hidden">
+                        <button onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
+                            <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload Icon</span>
+                        </button>
+                    </div>
 
-        <section>
-            <h3 class="text-2xl font-black mb-8 flex items-center text-gray-400">
-                <span class="w-2 h-6 bg-gray-300 rounded-full mr-3"></span>
-                Active Records
-            </h3>
-            <div id="active-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-75"></div>
-        </section>
-    </main>
+                    <input type="text" id="admin-app-url" placeholder="Download URL" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                    
+                    <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
+                        <option value="General">Select Category</option>
+                        <option value="Games">Games</option>
+                        <option value="Apps">Apps</option>
+                        <option value="Arcade">Arcade</option>
+                        <option value="Graphics & Design">Graphics & Design</option>
+                        <option value="Productivity">Productivity</option>
+                        <option value="Entertainment">Entertainment</option>
+                    </select>
+                </div>
+                <button id="admin-direct-add" class="mt-4 w-full md:w-auto bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center">
+                    <span id="btn-text">Publish Directly</span>
+                </button>
+            </section>
+
+            <div class="grid grid-cols-2 gap-4 mb-12">
+                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Incoming</p>
+                    <h3 id="stat-pending" class="text-3xl font-black text-orange-500">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Live Store</p>
+                    <h3 id="stat-live" class="text-3xl font-black text-emerald-500">0</h3>
+                </div>
+            </div>
+
+            <section class="mb-16">
+                <h3 class="text-2xl font-black mb-8 flex items-center">
+                    <span class="w-2 h-6 bg-orange-400 rounded-full mr-3"></span> Review Queue
+                </h3>
+                <div id="pending-list" class="space-y-4"></div>
+            </section>
+
+            <section>
+                <h3 class="text-2xl font-black mb-8 flex items-center text-gray-400">
+                    <span class="w-2 h-6 bg-gray-300 rounded-full mr-3"></span> Active Records
+                </h3>
+                <div id="active-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+        </main>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        // CONFIGURATION
-        const CLOUD_NAME = "dsbzvgotw";
-        const UPLOAD_PRESET = "modiba"; // <-- REQUIRED: Add your preset name here
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_lFs83fyT6pNcNECGueOYJeedGVKY7GA",
@@ -133,6 +126,9 @@
             appId: "1:1051904277079:web:8166b47b1a1407e2fe0112"
         };
 
+        const CLOUD_NAME = "dsbzvgotw";
+        const UPLOAD_PRESET = "modiba"; 
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
@@ -140,7 +136,7 @@
 
         let selectedFile = null;
 
-        // UI Feedback Helper
+        // UI Helpers
         const showToast = (msg, color = "bg-emerald-500") => {
             const toast = document.getElementById('toast');
             toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none ${color}`;
@@ -150,16 +146,20 @@
         };
 
         // Auth Logic
-        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider).catch(e => showToast(e.message, "bg-red-500"));
-        window.logout = () => signOut(auth);
+        document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
 
         onAuthStateChanged(auth, (user) => {
+            const overlay = document.getElementById('auth-overlay');
+            const content = document.getElementById('admin-content');
             if (user) {
-                document.getElementById('auth-overlay').classList.add('hidden');
-                document.getElementById('admin-body').classList.replace('opacity-0', 'opacity-100');
+                overlay.classList.add('hidden');
+                content.classList.remove('hidden');
+                setTimeout(() => content.classList.add('opacity-100'), 100);
             } else {
-                document.getElementById('auth-overlay').classList.remove('hidden');
-                document.getElementById('admin-body').classList.replace('opacity-100', 'opacity-0');
+                overlay.classList.remove('hidden');
+                content.classList.add('hidden');
+                content.classList.remove('opacity-100');
             }
         });
 
@@ -169,115 +169,84 @@
             if (selectedFile) document.getElementById('file-label').innerText = selectedFile.name;
         };
 
-        // Cloudinary Upload Logic
+        // Cloudinary
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', UPLOAD_PRESET);
-
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
-            });
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
             if(!res.ok) throw new Error("Upload Failed");
             const data = await res.json();
             return data.secure_url;
         }
 
-        // Add App Logic
+        // Add App
         document.getElementById('admin-direct-add').onclick = async () => {
             const name = document.getElementById('admin-app-name').value;
-            const downloadUrl = document.getElementById('admin-app-url').value;
-            const category = document.getElementById('admin-app-cat').value;
+            const url = document.getElementById('admin-app-url').value;
+            const cat = document.getElementById('admin-app-cat').value;
             const btn = document.getElementById('admin-direct-add');
 
-            if(!name || !downloadUrl || !selectedFile) {
-                return showToast("Please complete all fields", "bg-orange-500");
-            }
+            if(!name || !url || !selectedFile) return showToast("Please fill all fields", "bg-orange-500");
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Uploading...`;
 
             try {
                 const iconUrl = await uploadToCloudinary(selectedFile);
-
                 await push(ref(db, 'apps'), {
-                    name, 
-                    icon: iconUrl, 
-                    downloadUrl, 
-                    category,
-                    isConfirmed: true,
-                    rating: "5.0"
+                    name, icon: iconUrl, downloadUrl: url, category: cat, isConfirmed: true, rating: "5.0"
                 });
-                
-                showToast("App Successfully Published!");
-                // Reset form
+                showToast("Published Successfully!");
                 document.getElementById('admin-app-name').value = "";
                 document.getElementById('admin-app-url').value = "";
                 document.getElementById('file-label').innerText = "Upload Icon";
                 selectedFile = null;
-            } catch (err) {
-                showToast("Cloudinary Upload Failed", "bg-red-500");
+            } catch (e) {
+                showToast("Error: " + e.message, "bg-red-500");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = "Publish Directly";
             }
         };
 
-        // Realtime Data Sync
-        onValue(ref(db, 'apps'), (snapshot) => {
-            const data = snapshot.val();
+        // Realtime Sync
+        onValue(ref(db, 'apps'), (snap) => {
+            const data = snap.val();
             const pList = document.getElementById('pending-list');
             const aList = document.getElementById('active-list');
-            const pStat = document.getElementById('stat-pending');
-            const aStat = document.getElementById('stat-live');
-            
             pList.innerHTML = ""; aList.innerHTML = "";
             let pCount = 0; let aCount = 0;
 
-            if(!data) {
-                pStat.innerText = 0; aStat.innerText = 0;
-                pList.innerHTML = `<div class="p-10 text-center bg-white rounded-[2rem] text-gray-300 font-bold uppercase tracking-widest">Empty Database</div>`;
-                return;
-            }
-
-            Object.keys(data).forEach(id => {
-                const item = data[id];
-                const card = `
-                    <div class="card-entry bg-white p-5 rounded-[2rem] border border-gray-100 flex items-center justify-between shadow-sm hover:border-blue-100 transition">
-                        <div class="flex items-center space-x-4 min-w-0">
-                            <img src="${item.icon}" class="w-12 h-12 rounded-xl bg-gray-50 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${item.name}'">
-                            <div class="truncate">
-                                <h4 class="font-extrabold text-gray-900 truncate">${item.name}</h4>
-                                <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest truncate">${item.category || 'General'}</p>
+            if(data) {
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    const card = `
+                        <div class="card-entry bg-white p-4 rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
+                            <div class="flex items-center space-x-4">
+                                <img src="${item.icon}" class="w-10 h-10 rounded-lg object-cover bg-gray-50">
+                                <div>
+                                    <h4 class="font-bold text-sm">${item.name}</h4>
+                                    <p class="text-[10px] text-gray-400 uppercase font-black">${item.category}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex space-x-2 ml-4">
-                            <button onclick="deleteApp('${id}')" class="w-10 h-10 flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button>
-                            ${!item.isConfirmed ? `<button onclick="approveApp('${id}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-blue-700 transition">Approve</button>` : ''}
-                        </div>
-                    </div>`;
-
-                if(item.isConfirmed) { aList.innerHTML += card; aCount++; } 
-                else { pList.innerHTML += card; pCount++; }
-            });
-
-            pStat.innerText = pCount; aStat.innerText = aCount;
-            if(pCount === 0) pList.innerHTML = `<div class="p-12 text-center bg-white rounded-[2rem] text-gray-300 font-black italic uppercase tracking-widest">✨ Inbox Zero</div>`;
+                            <div class="flex space-x-2">
+                                <button onclick="window.deleteApp('${id}')" class="text-red-400 p-2 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                ${!item.isConfirmed ? `<button onclick="window.approveApp('${id}')" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">Approve</button>` : ''}
+                            </div>
+                        </div>`;
+                    if(item.isConfirmed) { aList.innerHTML += card; aCount++; }
+                    else { pList.innerHTML += card; pCount++; }
+                });
+            }
+            document.getElementById('stat-pending').innerText = pCount;
+            document.getElementById('stat-live').innerText = aCount;
         });
 
-        // Action Handlers
-        window.approveApp = (id) => {
-            update(ref(db, `apps/${id}`), { isConfirmed: true });
-            showToast("App Approved!");
-        };
-        
-        window.deleteApp = (id) => {
-            if(confirm("Permanently delete this record?")) {
-                remove(ref(db, `apps/${id}`));
-                showToast("Record Deleted", "bg-gray-800");
-            }
-        };
+        // Global functions for HTML access
+        window.approveApp = (id) => update(ref(db, `apps/${id}`), { isConfirmed: true });
+        window.deleteApp = (id) => confirm("Delete permanently?") && remove(ref(db, `apps/${id}`));
+
     </script>
 </body>
 </html>
