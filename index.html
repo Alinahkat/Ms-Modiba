@@ -130,21 +130,23 @@
                     <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
                     <span>Carousel / Featured Banner</span>
                 </h3>
+                
                 <div class="mb-8 p-6 bg-orange-50/50 rounded-3xl border border-dashed border-orange-200">
-                    <p class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Add Custom Carousel Image</p>
+                    <p class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Update Featured Banner Image</p>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <select id="carousel-app-select" class="flex-1 px-5 py-3 bg-white rounded-2xl border border-orange-100 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
                             <option value="">Select App to Feature</option>
                         </select>
                         <input type="file" id="carousel-custom-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('carousel-custom-file').click()" class="px-5 py-3 bg-white border border-orange-200 rounded-2xl text-sm text-gray-600 hover:bg-orange-50 transition">
-                            <i class="fa-solid fa-upload mr-2"></i> <span id="carousel-file-label">Select Image</span>
+                            <i class="fa-solid fa-upload mr-2"></i> <span id="carousel-file-label">Custom Image</span>
                         </button>
-                        <button id="btn-upload-carousel" class="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-orange-600 transition active:scale-95">
-                            Update Carousel
+                        <button id="btn-upload-carousel" class="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold text-sm hover:bg-orange-600 transition active:scale-95 flex items-center justify-center min-w-[150px]">
+                            <span id="carousel-btn-text">Save to Carousel</span>
                         </button>
                     </div>
                 </div>
+
                 <div id="carousel-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
             </section>
 
@@ -352,42 +354,51 @@
             }
         };
 
-        // NEW CAROUSEL UPLOAD LOGIC
+        // CAROUSEL CUSTOM UPLOAD LOGIC WITH FIREBASE SET & SUCCESS MODAL
         document.getElementById('btn-upload-carousel').onclick = async () => {
             const appId = document.getElementById('carousel-app-select').value;
             const btn = document.getElementById('btn-upload-carousel');
+            const btnText = document.getElementById('carousel-btn-text');
             
-            if(!appId) return showToast("Please select an app", "bg-orange-500");
+            if(!appId) return showToast("Select an application first", "bg-orange-500");
             
             btn.disabled = true;
-            btn.innerText = "Uploading...";
+            btnText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Syncing...`;
 
             try {
                 const snapshot = await get(ref(db, `apps/${appId}`));
-                const appData = snapshot.val();
+                if(!snapshot.exists()) throw new Error("App not found");
                 
-                let bannerUrl = appData.banner;
+                const appData = snapshot.val();
+                let finalBanner = appData.banner;
+
                 if(selectedCarouselFile) {
-                    bannerUrl = await uploadToCloudinary(selectedCarouselFile);
+                    finalBanner = await uploadToCloudinary(selectedCarouselFile);
                 }
 
+                // Update/Set on Firebase
                 await set(ref(db, `featured/${appId}`), {
                     name: appData.name,
                     description: appData.description,
                     icon: appData.icon,
-                    banner: bannerUrl,
+                    banner: finalBanner,
                     category: appData.category,
                     appId: appId
                 });
 
-                showToast("Carousel updated successfully");
+                // Trigger Success Modal
+                window.openModal(`Carousel item for ${appData.name} updated on Firebase.`);
+                
+                // Reset Carousel Input
                 selectedCarouselFile = null;
-                document.getElementById('carousel-file-label').innerText = "Select Image";
+                document.getElementById('carousel-file-label').innerText = "Custom Image";
+                document.getElementById('carousel-app-select').value = "";
+                
             } catch (err) {
-                showToast("Error updating carousel", "bg-red-500");
+                showToast("Firebase Error: " + err.message, "bg-red-500");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Update Carousel";
+                btnText.innerText = "Save to Carousel";
             }
         };
 
@@ -457,7 +468,6 @@
                 Object.keys(data).forEach(id => {
                     const item = data[id];
                     
-                    // Add to dropdown if confirmed
                     if(item.isConfirmed) {
                         const opt = document.createElement('option');
                         opt.value = id;
