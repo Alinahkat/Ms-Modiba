@@ -24,9 +24,7 @@
             </div>
             <h1 class="text-xl font-black tracking-tighter text-gray-900">Admin"Hub</h1>
         </div>
-        <div class="flex items-center space-x-3">
-            <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit to Store</a>
-        </div>
+        <a href="index.html" class="text-xs font-bold bg-black text-white px-4 py-2 rounded-xl hover:opacity-80 transition">Exit to Store</a>
     </nav>
 
     <main class="max-w-5xl mx-auto px-6 pt-12">
@@ -134,14 +132,13 @@
             const content = document.getElementById('modal-content');
             document.getElementById('modal-message').innerText = msg;
             modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.replace('opacity-0', 'opacity-100');
-                content.classList.replace('scale-95', 'scale-100');
-            }, 10);
+            setTimeout(() => content.classList.replace('opacity-0', 'opacity-100'), 10);
+            setTimeout(() => content.classList.replace('scale-95', 'scale-100'), 10);
         };
 
         window.closeSuccessModal = () => {
-            document.getElementById('success-modal').classList.add('hidden');
+            const modal = document.getElementById('success-modal');
+            modal.classList.add('hidden');
         };
 
         // --- Core App Logic ---
