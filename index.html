@@ -15,6 +15,11 @@
         
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Modal Animation */
+        #success-modal { transition: opacity 0.3s ease; }
+        #success-modal-content { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #success-modal.flex #success-modal-content { transform: scale(1); }
     </style>
 </head>
 <body class="pb-20">
@@ -29,6 +34,17 @@
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="Google">
             <span>Login with Google</span>
         </button>
+    </div>
+
+    <div id="success-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0">
+        <div id="success-modal-content" class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-2xl font-black tracking-tighter mb-2">Operation Successful</h3>
+            <p class="text-gray-500 font-medium mb-8" id="success-modal-msg">The database has been updated.</p>
+            <button onclick="closeModal()" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition active:scale-95">Dismiss</button>
+        </div>
     </div>
 
     <div id="admin-content" class="hidden opacity-0 transition-opacity duration-500">
@@ -143,6 +159,24 @@
         let editingId = null;
         let currentIconUrl = null;
 
+        // Modal Logic
+        window.openModal = (msg) => {
+            const modal = document.getElementById('success-modal');
+            document.getElementById('success-modal-msg').innerText = msg;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.add('opacity-100'), 10);
+        };
+
+        window.closeModal = () => {
+            const modal = document.getElementById('success-modal');
+            modal.classList.remove('opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+
         const showToast = (msg, color = "bg-emerald-500") => {
             const toast = document.getElementById('toast');
             toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none ${color}`;
@@ -226,10 +260,10 @@
 
                 if(editingId) {
                     await update(ref(db, `apps/${editingId}`), appData);
-                    showToast("App Updated Successfully!");
+                    window.openModal(`${name} has been updated successfully.`);
                 } else {
                     await push(ref(db, 'apps'), appData);
-                    showToast("Published Successfully!");
+                    window.openModal(`${name} has been published to the live store.`);
                 }
                 resetForm();
             } catch (e) {
@@ -289,7 +323,11 @@
             }
         };
 
-        window.approveApp = (id) => update(ref(db, `apps/${id}`), { isConfirmed: true });
+        window.approveApp = (id) => {
+            update(ref(db, `apps/${id}`), { isConfirmed: true });
+            window.openModal("Application approved and moved to Live Store.");
+        };
+        
         window.deleteApp = (id) => confirm("Delete permanently?") && remove(ref(db, `apps/${id}`));
 
     </script>
