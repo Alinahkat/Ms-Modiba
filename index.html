@@ -86,7 +86,7 @@
                     <div class="relative">
                         <input type="file" id="admin-banner-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-banner-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
-                            <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">Upload Wide Banner</span>
+                            <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">Upload App Banner</span>
                         </button>
                     </div>
 
@@ -250,7 +250,7 @@
             document.getElementById('admin-app-url').value = "";
             document.getElementById('admin-app-cat').value = "General";
             document.getElementById('file-label').innerText = "Upload App Icon";
-            document.getElementById('banner-label').innerText = "Upload Wide Banner";
+            document.getElementById('banner-label').innerText = "Upload App Banner";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -279,7 +279,7 @@
                 const appData = {
                     name, 
                     icon: iconUrl, 
-                    banner: bannerUrl || iconUrl, // Fallback if no banner provided
+                    banner: bannerUrl || iconUrl, // Both stored for user store usage
                     downloadUrl: url, 
                     category: cat, 
                     isConfirmed: true, 
@@ -305,11 +305,10 @@
             const snapshot = await get(ref(db, `apps/${id}`));
             const app = snapshot.val();
             if(app) {
-                // We send both the icon and banner to the featured node
                 await set(ref(db, `featured/${id}`), {
                     name: app.name,
                     icon: app.icon,
-                    banner: app.banner || app.icon, 
+                    banner: app.banner || app.icon, // This is what the carousel in the store will read
                     category: app.category,
                     appId: id
                 });
