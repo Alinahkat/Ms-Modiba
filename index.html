@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <title>Admin"Hub | Management</title>
+    <title>Admin"Hub | Management & Carousel</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2F2F7; }
@@ -20,6 +20,11 @@
         #success-modal { transition: opacity 0.3s ease; }
         #success-modal-content { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #success-modal.flex #success-modal-content { transform: scale(1); }
+
+        /* Carousel Styling */
+        .carousel-snap { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; scrollbar-width: none; }
+        .carousel-snap::-webkit-scrollbar { display: none; }
+        .carousel-item { flex: 0 0 85%; scroll-snap-align: center; }
     </style>
 </head>
 <body class="pb-20">
@@ -29,7 +34,7 @@
             <i class="fa-solid fa-lock"></i>
         </div>
         <h2 class="text-3xl font-black tracking-tighter mb-2">Restricted Access</h2>
-        <p class="text-gray-400 mb-8 max-w-xs font-medium">Please authenticate with your Google account to manage the database.</p>
+        <p class="text-gray-400 mb-8 max-w-xs font-medium">Please authenticate with your Google account to manage the database and carousel.</p>
         <button id="btn-login" class="flex items-center space-x-4 bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition transform active:scale-95 shadow-xl shadow-gray-200">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5" alt="Google">
             <span>Login with Google</span>
@@ -68,6 +73,16 @@
         </nav>
 
         <main class="max-w-5xl mx-auto px-6 pt-12">
+            
+            <section class="mb-12">
+                <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
+                    <i class="fa-solid fa-鋪-layer text-orange-500 mr-2"></i> 
+                    User Store Carousel Preview
+                </h3>
+                <div id="store-carousel" class="carousel-snap pb-4">
+                    </div>
+            </section>
+
             <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
                 <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
                     <i class="fa-solid fa-edit text-blue-600 mr-2" id="form-icon"></i> 
@@ -105,16 +120,6 @@
                 </div>
             </section>
 
-            <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-orange-100 shadow-sm">
-                <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
-                    <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
-                    <span>Carousel / Featured Banner</span>
-                </h3>
-                <p class="text-xs text-gray-400 mb-4 font-bold uppercase tracking-widest">Currently Featured in User App Store</p>
-                <div id="carousel-list" class="flex flex-wrap gap-3 mb-6">
-                    </div>
-            </section>
-
             <div class="grid grid-cols-2 gap-4 mb-12">
                 <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Incoming</p>
@@ -127,7 +132,7 @@
             </div>
 
             <section class="mb-16">
-                <h3 class="text-2xl font-black mb-8 flex items-center">
+                <h3 class="text-2xl font-black mb-8 flex items-center text-orange-400">
                     <span class="w-2 h-6 bg-orange-400 rounded-full mr-3"></span> Review Queue
                 </h3>
                 <div id="pending-list" class="space-y-4"></div>
@@ -169,7 +174,7 @@
         let editingId = null;
         let currentIconUrl = null;
 
-        // Modal Logic
+        // Modal/Toast
         window.openModal = (msg) => {
             const modal = document.getElementById('success-modal');
             document.getElementById('success-modal-msg').innerText = msg;
@@ -177,16 +182,11 @@
             modal.classList.add('flex');
             setTimeout(() => modal.classList.add('opacity-100'), 10);
         };
-
         window.closeModal = () => {
             const modal = document.getElementById('success-modal');
             modal.classList.remove('opacity-100');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 300);
         };
-
         const showToast = (msg, color = "bg-emerald-500") => {
             const toast = document.getElementById('toast');
             toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none ${color}`;
@@ -195,23 +195,63 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         };
 
+        // Auth
         document.getElementById('btn-login').onclick = () => signInWithPopup(auth, provider);
         document.getElementById('btn-logout').onclick = () => signOut(auth);
-
         onAuthStateChanged(auth, (user) => {
             const overlay = document.getElementById('auth-overlay');
             const content = document.getElementById('admin-content');
-            if (user) {
-                overlay.classList.add('hidden');
-                content.classList.remove('hidden');
-                setTimeout(() => content.classList.add('opacity-100'), 100);
-            } else {
-                overlay.classList.remove('hidden');
-                content.classList.add('hidden');
-                content.classList.remove('opacity-100');
-            }
+            if (user) { overlay.classList.add('hidden'); content.classList.remove('hidden'); setTimeout(() => content.classList.add('opacity-100'), 100); }
+            else { overlay.classList.remove('hidden'); content.classList.add('hidden'); content.classList.remove('opacity-100'); }
         });
 
+        // Carousel Management (Toggle Function)
+        window.toggleFeatured = async (id) => {
+            const snap = await get(ref(db, `apps/${id}`));
+            const appData = snap.val();
+            const featSnap = await get(ref(db, `featured/${id}`));
+
+            if (featSnap.exists()) {
+                await remove(ref(db, `featured/${id}`));
+                showToast("Removed from Carousel", "bg-gray-800");
+            } else {
+                await set(ref(db, `featured/${id}`), {
+                    name: appData.name,
+                    icon: appData.icon,
+                    category: appData.category,
+                    appId: id
+                });
+                showToast("Added to Carousel", "bg-orange-500");
+            }
+        };
+
+        // Carousel Live Listener
+        onValue(ref(db, 'featured'), (snap) => {
+            const data = snap.val();
+            const container = document.getElementById('store-carousel');
+            container.innerHTML = "";
+            if(!data) {
+                container.innerHTML = `<div class="w-full py-10 bg-white rounded-[2rem] text-center border-2 border-dashed border-gray-200 text-gray-400 font-bold">No Featured Apps</div>`;
+                return;
+            }
+            Object.keys(data).forEach(id => {
+                const item = data[id];
+                container.innerHTML += `
+                    <div class="carousel-item relative h-40 bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-xl">
+                        <img src="${item.icon}" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-md">
+                        <div class="absolute inset-0 p-6 flex items-center space-x-5">
+                            <img src="${item.icon}" class="w-20 h-20 rounded-3xl border-4 border-white/20 shadow-2xl">
+                            <div class="text-white">
+                                <span class="text-[10px] font-black uppercase tracking-widest bg-orange-500 px-2 py-1 rounded-md">Featured</span>
+                                <h4 class="text-xl font-black mt-1">${item.name}</h4>
+                                <p class="text-sm opacity-70">${item.category}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        // App Management Logic
         document.getElementById('admin-app-file').onchange = (e) => {
             selectedFile = e.target.files[0];
             if (selectedFile) document.getElementById('file-label').innerText = selectedFile.name;
@@ -222,109 +262,43 @@
             formData.append('file', file);
             formData.append('upload_preset', UPLOAD_PRESET);
             const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-            if(!res.ok) throw new Error("Upload Failed");
             const data = await res.json();
             return data.secure_url;
         }
 
         const resetForm = () => {
-            editingId = null;
-            currentIconUrl = null;
-            selectedFile = null;
-            document.getElementById('admin-app-name').value = "";
-            document.getElementById('admin-app-url').value = "";
-            document.getElementById('admin-app-cat').value = "General";
-            document.getElementById('file-label').innerText = "Upload Icon";
-            document.getElementById('btn-text').innerText = "Publish Directly";
-            document.getElementById('form-title').innerText = "Add App to Database";
+            editingId = null; currentIconUrl = null; selectedFile = null;
+            document.getElementById('admin-app-name').value = ""; document.getElementById('admin-app-url').value = "";
+            document.getElementById('admin-app-cat').value = "General"; document.getElementById('file-label').innerText = "Upload Icon";
+            document.getElementById('btn-text').innerText = "Publish Directly"; document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
         };
-
-        document.getElementById('btn-cancel-edit').onclick = resetForm;
 
         document.getElementById('admin-direct-add').onclick = async () => {
             const name = document.getElementById('admin-app-name').value;
             const url = document.getElementById('admin-app-url').value;
             const cat = document.getElementById('admin-app-cat').value;
             const btn = document.getElementById('admin-direct-add');
-
             if(!name || !url || (!selectedFile && !editingId)) return showToast("Please fill all fields", "bg-orange-500");
 
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...`;
-
+            btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>`;
             try {
-                let iconUrl = currentIconUrl;
-                if(selectedFile) {
-                    iconUrl = await uploadToCloudinary(selectedFile);
-                }
-
-                const appData = {
-                    name, 
-                    icon: iconUrl, 
-                    downloadUrl: url, 
-                    category: cat, 
-                    isConfirmed: true, 
-                    rating: "5.0"
-                };
-
-                if(editingId) {
-                    await update(ref(db, `apps/${editingId}`), appData);
-                    window.openModal(`${name} has been updated successfully.`);
-                } else {
-                    await push(ref(db, 'apps'), appData);
-                    window.openModal(`${name} has been published to the live store.`);
-                }
+                let iconUrl = currentIconUrl || await uploadToCloudinary(selectedFile);
+                const appData = { name, icon: iconUrl, downloadUrl: url, category: cat, isConfirmed: true, rating: "5.0" };
+                if(editingId) await update(ref(db, `apps/${editingId}`), appData);
+                else await push(ref(db, 'apps'), appData);
+                window.openModal("Operation successful.");
                 resetForm();
-            } catch (e) {
-                showToast("Error: " + e.message, "bg-red-500");
-            } finally {
-                btn.disabled = false;
-            }
+            } catch (e) { showToast("Error: " + e.message, "bg-red-500"); }
+            finally { btn.disabled = false; btn.innerText = "Publish Directly"; }
         };
 
-        // Carousel Management Logic
-        window.addToCarousel = async (id) => {
-            const snapshot = await get(ref(db, `apps/${id}`));
-            const app = snapshot.val();
-            if(app) {
-                await set(ref(db, `featured/${id}`), {
-                    name: app.name,
-                    icon: app.icon,
-                    category: app.category,
-                    appId: id
-                });
-                showToast("Added to Carousel");
-            }
-        };
-
-        window.removeFromCarousel = (id) => {
-            remove(ref(db, `featured/${id}`));
-            showToast("Removed from Carousel", "bg-gray-700");
-        };
-
-        // Sync Data
-        onValue(ref(db, 'featured'), (snap) => {
+        // Main List Listener
+        onValue(ref(db, 'apps'), async (snap) => {
             const data = snap.val();
-            const list = document.getElementById('carousel-list');
-            list.innerHTML = data ? "" : "<p class='text-sm text-gray-400'>No featured apps.</p>";
-            if(data) {
-                Object.keys(data).forEach(id => {
-                    const item = data[id];
-                    list.innerHTML += `
-                        <div class="bg-gray-100 px-4 py-2 rounded-xl flex items-center space-x-3 border border-gray-200">
-                            <img src="${item.icon}" class="w-6 h-6 rounded-md object-cover">
-                            <span class="text-xs font-bold">${item.name}</span>
-                            <button onclick="window.removeFromCarousel('${id}')" class="text-red-500 hover:text-red-700 ml-2">
-                                <i class="fa-solid fa-circle-xmark"></i>
-                            </button>
-                        </div>`;
-                });
-            }
-        });
-
-        onValue(ref(db, 'apps'), (snap) => {
-            const data = snap.val();
+            const featSnap = await get(ref(db, 'featured'));
+            const featuredIds = featSnap.exists() ? Object.keys(featSnap.val()) : [];
+            
             const pList = document.getElementById('pending-list');
             const aList = document.getElementById('active-list');
             pList.innerHTML = ""; aList.innerHTML = "";
@@ -333,6 +307,7 @@
             if(data) {
                 Object.keys(data).forEach(id => {
                     const item = data[id];
+                    const isFeat = featuredIds.includes(id);
                     const card = `
                         <div class="card-entry bg-white p-4 rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
                             <div class="flex items-center space-x-4">
@@ -343,10 +318,10 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-1">
-                                ${item.isConfirmed ? `<button onclick="window.addToCarousel('${id}')" class="text-orange-400 p-2 hover:bg-orange-50 rounded-lg transition" title="Feature in Carousel"><i class="fa-solid fa-star"></i></button>` : ''}
-                                <button onclick="window.editApp('${id}')" class="text-blue-500 p-2 hover:bg-blue-50 rounded-lg transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="window.deleteApp('${id}')" class="text-red-400 p-2 hover:bg-red-50 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
-                                ${!item.isConfirmed ? `<button onclick="window.approveApp('${id}')" class="ml-2 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700">Approve</button>` : ''}
+                                ${item.isConfirmed ? `<button onclick="window.toggleFeatured('${id}')" class="p-2 rounded-lg transition ${isFeat ? 'text-orange-500 bg-orange-50' : 'text-gray-300 hover:text-orange-400'}"><i class="fa-solid fa-star"></i></button>` : ''}
+                                <button onclick="window.editApp('${id}')" class="text-blue-500 p-2 hover:bg-blue-50 rounded-lg"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="window.deleteApp('${id}')" class="text-red-400 p-2 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                ${!item.isConfirmed ? `<button onclick="window.approveApp('${id}')" class="ml-2 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">Approve</button>` : ''}
                             </div>
                         </div>`;
                     if(item.isConfirmed) { aList.innerHTML += card; aCount++; }
@@ -358,29 +333,26 @@
         });
 
         window.editApp = async (id) => {
-            const snapshot = await get(ref(db, `apps/${id}`));
-            const data = snapshot.val();
+            const snap = await get(ref(db, `apps/${id}`));
+            const data = snap.val();
             if(data) {
-                editingId = id;
-                currentIconUrl = data.icon;
+                editingId = id; currentIconUrl = data.icon;
                 document.getElementById('admin-app-name').value = data.name;
                 document.getElementById('admin-app-url').value = data.downloadUrl;
-                document.getElementById('admin-app-cat').value = data.category || "General";
-                document.getElementById('file-label').innerText = "Change Icon (Optional)";
-                document.getElementById('btn-text').innerText = "Update Application";
-                document.getElementById('form-title').innerText = "Editing: " + data.name;
+                document.getElementById('admin-app-cat').value = data.category;
+                document.getElementById('btn-text').innerText = "Update App";
                 document.getElementById('btn-cancel-edit').classList.remove('hidden');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
 
-        window.approveApp = (id) => {
-            update(ref(db, `apps/${id}`), { isConfirmed: true });
-            window.openModal("Application approved and moved to Live Store.");
+        window.approveApp = (id) => update(ref(db, `apps/${id}`), { isConfirmed: true });
+        window.deleteApp = (id) => {
+            if(confirm("Delete permanently?")) {
+                remove(ref(db, `apps/${id}`));
+                remove(ref(db, `featured/${id}`));
+            }
         };
-        
-        window.deleteApp = (id) => confirm("Delete permanently?") && remove(ref(db, `apps/${id}`));
-
     </script>
 </body>
 </html>
