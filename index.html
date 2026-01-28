@@ -16,7 +16,6 @@
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
 
-        /* Modal Animation */
         #success-modal { transition: opacity 0.3s ease; }
         #success-modal-content { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #success-modal.flex #success-modal-content { transform: scale(1); }
@@ -62,9 +61,7 @@
                 </div>
                 <h1 class="text-xl font-black tracking-tighter">Admin"Hub</h1>
             </div>
-            <div class="flex items-center space-x-4">
-                <button id="btn-logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout Account</button>
-            </div>
+            <button id="btn-logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout Account</button>
         </nav>
 
         <main class="max-w-5xl mx-auto px-6 pt-12">
@@ -105,7 +102,7 @@
                     <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none"></textarea>
                 </div>
                 <div class="flex flex-col md:flex-row gap-3 mt-4">
-                    <button id="admin-direct-add" class="bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center">
+                    <button id="admin-direct-add" class="bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center min-w-[180px]">
                         <span id="btn-text">Publish Directly</span>
                     </button>
                     <button id="btn-cancel-edit" class="hidden bg-gray-200 text-gray-600 px-6 py-3 rounded-2xl font-bold text-sm hover:bg-gray-300 transition">
@@ -119,9 +116,7 @@
                     <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
                     <span>Carousel / Featured Banner</span>
                 </h3>
-                <p class="text-xs text-gray-400 mb-4 font-bold uppercase tracking-widest">Currently Featured in User App Store</p>
-                <div id="carousel-list" class="flex flex-wrap gap-3 mb-6">
-                    </div>
+                <div id="carousel-list" class="flex flex-wrap gap-3 mb-6"></div>
             </section>
 
             <div class="grid grid-cols-2 gap-4 mb-12">
@@ -199,6 +194,7 @@
 
         const showToast = (msg, color = "bg-emerald-500") => {
             const toast = document.getElementById('toast');
+            if(!toast) return;
             toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none ${color}`;
             document.getElementById('toast-msg').innerText = msg;
             toast.classList.add('show');
@@ -257,36 +253,42 @@
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
+            
+            // Explicitly reset processing button state
+            const btn = document.getElementById('admin-direct-add');
+            btn.disabled = false;
+            btn.innerHTML = `<span>Publish Directly</span>`;
         };
 
         document.getElementById('btn-cancel-edit').onclick = resetForm;
 
         document.getElementById('admin-direct-add').onclick = async () => {
+            const btn = document.getElementById('admin-direct-add');
             const name = document.getElementById('admin-app-name').value;
             const url = document.getElementById('admin-app-url').value;
             const desc = document.getElementById('admin-app-desc').value;
             const cat = document.getElementById('admin-app-cat').value;
-            const btn = document.getElementById('admin-direct-add');
 
-            if(!name || !url || (!selectedFile && !editingId)) return showToast("Please fill all fields", "bg-orange-500");
+            if(!name || !url) return showToast("Name and URL are required", "bg-orange-500");
 
+            // UI Feedback: Start Processing
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...`;
 
             try {
-                let iconUrl = currentIconUrl;
+                let iconUrl = currentIconUrl || "";
                 if(selectedFile) iconUrl = await uploadToCloudinary(selectedFile);
 
-                let bannerUrl = currentBannerUrl;
+                let bannerUrl = currentBannerUrl || "";
                 if(selectedBannerFile) bannerUrl = await uploadToCloudinary(selectedBannerFile);
 
                 const appData = {
-                    name, 
-                    description: desc,
-                    icon: iconUrl, 
-                    banner: bannerUrl || iconUrl, 
-                    downloadUrl: url, 
-                    category: cat, 
+                    name: name || "Unknown App", 
+                    description: desc || "No description provided.",
+                    icon: iconUrl || "https://via.placeholder.com/150", 
+                    banner: bannerUrl || iconUrl || "https://via.placeholder.com/600x300", 
+                    downloadUrl: url || "#", 
+                    category: cat || "General", 
                     isConfirmed: true, 
                     rating: "5.0"
                 };
@@ -298,28 +300,34 @@
                     await push(ref(db, 'apps'), appData);
                     window.openModal(`${name} published to Live Store.`);
                 }
+                
+                // Success: Reset Everything
                 resetForm();
+
             } catch (e) {
                 showToast("Error: " + e.message, "bg-red-500");
-            } finally {
+                // Reset button so user can try again
                 btn.disabled = false;
+                btn.innerHTML = editingId ? `Update Application` : `Publish Directly`;
             }
         };
 
         window.addToCarousel = async (id) => {
-            const snapshot = await get(ref(db, `apps/${id}`));
-            const app = snapshot.val();
-            if(app) {
-                await set(ref(db, `featured/${id}`), {
-                    name: app.name,
-                    description: app.description || "",
-                    icon: app.icon,
-                    banner: app.banner || app.icon, 
-                    category: app.category,
-                    appId: id
-                });
-                showToast("Added to Carousel");
-            }
+            try {
+                const snapshot = await get(ref(db, `apps/${id}`));
+                const app = snapshot.val();
+                if(app) {
+                    await set(ref(db, `featured/${id}`), {
+                        name: app.name || "Featured App",
+                        description: app.description || "",
+                        icon: app.icon || "",
+                        banner: app.banner || app.icon || "", 
+                        category: app.category || "General",
+                        appId: id
+                    });
+                    showToast("Added to Carousel");
+                }
+            } catch (err) { console.error(err); }
         };
 
         window.removeFromCarousel = (id) => {
@@ -330,14 +338,15 @@
         onValue(ref(db, 'featured'), (snap) => {
             const data = snap.val();
             const list = document.getElementById('carousel-list');
+            if(!list) return;
             list.innerHTML = data ? "" : "<p class='text-sm text-gray-400'>No featured apps.</p>";
             if(data) {
                 Object.keys(data).forEach(id => {
                     const item = data[id];
                     list.innerHTML += `
                         <div class="bg-gray-100 px-4 py-2 rounded-xl flex items-center space-x-3 border border-gray-200">
-                            <img src="${item.icon}" class="w-6 h-6 rounded-md object-cover">
-                            <span class="text-xs font-bold">${item.name}</span>
+                            <img src="${item.icon || ''}" class="w-6 h-6 rounded-md object-cover">
+                            <span class="text-xs font-bold">${item.name || 'App'}</span>
                             <button onclick="window.removeFromCarousel('${id}')" class="text-red-500 hover:text-red-700 ml-2">
                                 <i class="fa-solid fa-circle-xmark"></i>
                             </button>
@@ -350,6 +359,7 @@
             const data = snap.val();
             const pList = document.getElementById('pending-list');
             const aList = document.getElementById('active-list');
+            if(!pList || !aList) return;
             pList.innerHTML = ""; aList.innerHTML = "";
             let pCount = 0; let aCount = 0;
 
@@ -359,14 +369,14 @@
                     const card = `
                         <div class="card-entry bg-white p-4 rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
                             <div class="flex items-center space-x-4">
-                                <img src="${item.icon}" class="w-10 h-10 rounded-lg object-cover bg-gray-50">
+                                <img src="${item.icon || ''}" class="w-10 h-10 rounded-lg object-cover bg-gray-50">
                                 <div>
-                                    <h4 class="font-bold text-sm">${item.name}</h4>
-                                    <p class="text-[10px] text-gray-400 uppercase font-black">${item.category}</p>
+                                    <h4 class="font-bold text-sm">${item.name || 'Untitled'}</h4>
+                                    <p class="text-[10px] text-gray-400 uppercase font-black">${item.category || 'General'}</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-1">
-                                ${item.isConfirmed ? `<button onclick="window.addToCarousel('${id}')" class="text-orange-400 p-2 hover:bg-orange-50 rounded-lg transition" title="Feature in Carousel"><i class="fa-solid fa-star"></i></button>` : ''}
+                                ${item.isConfirmed ? `<button onclick="window.addToCarousel('${id}')" class="text-orange-400 p-2 hover:bg-orange-50 rounded-lg transition"><i class="fa-solid fa-star"></i></button>` : ''}
                                 <button onclick="window.editApp('${id}')" class="text-blue-500 p-2 hover:bg-blue-50 rounded-lg transition"><i class="fa-solid fa-pen-to-square"></i></button>
                                 <button onclick="window.deleteApp('${id}')" class="text-red-400 p-2 hover:bg-red-50 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
                                 ${!item.isConfirmed ? `<button onclick="window.approveApp('${id}')" class="ml-2 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700">Approve</button>` : ''}
@@ -381,23 +391,29 @@
         });
 
         window.editApp = async (id) => {
-            const snapshot = await get(ref(db, `apps/${id}`));
-            const data = snapshot.val();
-            if(data) {
-                editingId = id;
-                currentIconUrl = data.icon;
-                currentBannerUrl = data.banner || null;
-                document.getElementById('admin-app-name').value = data.name;
-                document.getElementById('admin-app-url').value = data.downloadUrl;
-                document.getElementById('admin-app-desc').value = data.description || "";
-                document.getElementById('admin-app-cat').value = data.category || "General";
-                document.getElementById('file-label').innerText = "Change Icon (Optional)";
-                document.getElementById('banner-label').innerText = data.banner ? "Change Banner (Optional)" : "Upload Banner (Optional)";
-                document.getElementById('btn-text').innerText = "Update Application";
-                document.getElementById('form-title').innerText = "Editing: " + data.name;
-                document.getElementById('btn-cancel-edit').classList.remove('hidden');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            try {
+                const snapshot = await get(ref(db, `apps/${id}`));
+                const data = snapshot.val();
+                if(data) {
+                    editingId = id;
+                    currentIconUrl = data.icon || "";
+                    currentBannerUrl = data.banner || "";
+                    document.getElementById('admin-app-name').value = data.name || "";
+                    document.getElementById('admin-app-url').value = data.downloadUrl || "";
+                    document.getElementById('admin-app-desc').value = data.description || "";
+                    document.getElementById('admin-app-cat').value = data.category || "General";
+                    document.getElementById('file-label').innerText = "Change Icon (Optional)";
+                    document.getElementById('banner-label').innerText = "Change Banner (Optional)";
+                    
+                    const btn = document.getElementById('admin-direct-add');
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Update Application</span>`;
+                    
+                    document.getElementById('form-title').innerText = "Editing: " + (data.name || "App");
+                    document.getElementById('btn-cancel-edit').classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (err) { console.error(err); }
         };
 
         window.approveApp = (id) => {
