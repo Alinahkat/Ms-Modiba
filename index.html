@@ -73,13 +73,20 @@
                     <i class="fa-solid fa-edit text-blue-600 mr-2" id="form-icon"></i> 
                     <span id="form-title">Add App to Database</span>
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <input type="text" id="admin-app-name" placeholder="App Name" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
                     
                     <div class="relative">
                         <input type="file" id="admin-app-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
                             <i class="fa-solid fa-image mr-2"></i> <span id="file-label">Upload Icon</span>
+                        </button>
+                    </div>
+
+                    <div class="relative">
+                        <input type="file" id="admin-banner-file" accept="image/*" class="hidden">
+                        <button onclick="document.getElementById('admin-banner-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
+                            <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">Upload Banner (Carousel)</span>
                         </button>
                     </div>
 
@@ -166,8 +173,10 @@
         const provider = new GoogleAuthProvider();
 
         let selectedFile = null;
+        let selectedBannerFile = null;
         let editingId = null;
         let currentIconUrl = null;
+        let currentBannerUrl = null;
 
         // Modal Logic
         window.openModal = (msg) => {
@@ -217,6 +226,11 @@
             if (selectedFile) document.getElementById('file-label').innerText = selectedFile.name;
         };
 
+        document.getElementById('admin-banner-file').onchange = (e) => {
+            selectedBannerFile = e.target.files[0];
+            if (selectedBannerFile) document.getElementById('banner-label').innerText = selectedBannerFile.name;
+        };
+
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
@@ -230,11 +244,14 @@
         const resetForm = () => {
             editingId = null;
             currentIconUrl = null;
+            currentBannerUrl = null;
             selectedFile = null;
+            selectedBannerFile = null;
             document.getElementById('admin-app-name').value = "";
             document.getElementById('admin-app-url').value = "";
             document.getElementById('admin-app-cat').value = "General";
             document.getElementById('file-label').innerText = "Upload Icon";
+            document.getElementById('banner-label').innerText = "Upload Banner (Carousel)";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -259,9 +276,15 @@
                     iconUrl = await uploadToCloudinary(selectedFile);
                 }
 
+                let bannerUrl = currentBannerUrl;
+                if(selectedBannerFile) {
+                    bannerUrl = await uploadToCloudinary(selectedBannerFile);
+                }
+
                 const appData = {
                     name, 
                     icon: iconUrl, 
+                    banner: bannerUrl || iconUrl, // Use icon if no banner provided
                     downloadUrl: url, 
                     category: cat, 
                     isConfirmed: true, 
@@ -291,6 +314,7 @@
                 await set(ref(db, `featured/${id}`), {
                     name: app.name,
                     icon: app.icon,
+                    banner: app.banner || app.icon,
                     category: app.category,
                     appId: id
                 });
@@ -363,10 +387,12 @@
             if(data) {
                 editingId = id;
                 currentIconUrl = data.icon;
+                currentBannerUrl = data.banner || null;
                 document.getElementById('admin-app-name').value = data.name;
                 document.getElementById('admin-app-url').value = data.downloadUrl;
                 document.getElementById('admin-app-cat').value = data.category || "General";
                 document.getElementById('file-label').innerText = "Change Icon (Optional)";
+                document.getElementById('banner-label').innerText = data.banner ? "Change Banner (Optional)" : "Upload Banner (Optional)";
                 document.getElementById('btn-text').innerText = "Update Application";
                 document.getElementById('form-title').innerText = "Editing: " + data.name;
                 document.getElementById('btn-cancel-edit').classList.remove('hidden');
