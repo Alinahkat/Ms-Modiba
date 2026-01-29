@@ -12,20 +12,18 @@
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); }
         .card-entry { animation: slideIn 0.4s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+       
         #toast { transform: translateY(100px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.show { transform: translateY(0); opacity: 1; }
-
         .modal-animate { transition: opacity 0.3s ease; }
         .modal-content-animate { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .flex .modal-content-animate { transform: scale(1); }
-        
+       
         #progress-container { transition: all 0.3s ease; }
         #progress-fill { transition: width 0.2s ease-out; }
     </style>
 </head>
 <body class="pb-20">
-
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 text-center">
         <div class="w-20 h-20 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white text-3xl mb-6 shadow-2xl shadow-blue-200">
             <i class="fa-solid fa-lock"></i>
@@ -37,7 +35,6 @@
             <span>Login with Google</span>
         </button>
     </div>
-
     <div id="success-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0 modal-animate">
         <div id="success-modal-content" class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl modal-content-animate">
             <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
@@ -48,7 +45,6 @@
             <button onclick="closeModal('success-modal')" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition active:scale-95">Dismiss</button>
         </div>
     </div>
-
     <div id="delete-modal" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm hidden items-center justify-center p-6 opacity-0 modal-animate">
         <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl modal-content-animate">
             <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
@@ -62,7 +58,6 @@
             </div>
         </div>
     </div>
-
     <div id="admin-content" class="hidden opacity-0 transition-opacity duration-500">
         <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-8 py-4 rounded-[2rem] shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none">
             <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
@@ -70,7 +65,6 @@
             </div>
             <span class="font-bold tracking-tight" id="toast-msg">Success</span>
         </div>
-
         <nav class="sticky top-0 z-50 glass border-b border-gray-200 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm">
@@ -80,39 +74,29 @@
             </div>
             <button id="btn-logout" class="text-xs font-bold text-gray-400 hover:text-red-500 transition">Logout Account</button>
         </nav>
-
         <main class="max-w-5xl mx-auto px-6 pt-12">
             <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
                 <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
-                    <i class="fa-solid fa-bolt text-yellow-500 mr-2" id="form-icon"></i> 
+                    <i class="fa-solid fa-bolt text-yellow-500 mr-2" id="form-icon"></i>
                     <span id="form-title">Fast Publish App</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <input type="text" id="admin-app-name" placeholder="App Name" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
-                    
+                   
                     <div class="relative">
                         <input type="file" id="admin-app-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-app-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
                             <i class="fa-solid fa-image mr-2"></i> <span id="file-label">App Icon</span>
                         </button>
                     </div>
-
                     <div class="relative">
                         <input type="file" id="admin-banner-file" accept="image/*" class="hidden">
                         <button onclick="document.getElementById('admin-banner-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-transparent">
                             <i class="fa-solid fa-panorama mr-2"></i> <span id="banner-label">App Banner</span>
                         </button>
                     </div>
-
-                    <div class="relative">
-                        <input type="file" id="admin-apk-file" accept=".apk" class="hidden">
-                        <button onclick="document.getElementById('admin-apk-file').click()" class="w-full text-left px-5 py-3 bg-blue-50 rounded-2xl text-sm text-blue-600 truncate hover:bg-blue-100 transition border-2 border-dashed border-blue-200">
-                            <i class="fa-solid fa-file-zipper mr-2"></i> <span id="apk-label">Upload APK (Firebase)</span>
-                        </button>
-                    </div>
-
-                    <input type="text" id="admin-app-url" placeholder="Manual URL (Optional)" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
-                    
+                    <input type="text" id="admin-app-url" placeholder="Download URL (required)" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                   
                     <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
                         <option value="General">Select Category</option>
                         <option value="Games">Games</option>
@@ -122,14 +106,11 @@
                         <option value="Productivity">Productivity</option>
                         <option value="Entertainment">Entertainment</option>
                     </select>
-
                     <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none"></textarea>
                 </div>
-
                 <div id="progress-container" class="hidden mt-6 bg-gray-100 h-4 rounded-full overflow-hidden">
                     <div id="progress-fill" class="bg-blue-600 h-full w-0 flex items-center justify-center text-[10px] text-white font-bold tracking-widest uppercase">0%</div>
                 </div>
-
                 <div class="flex flex-col md:flex-row gap-3 mt-6">
                     <button id="admin-direct-add" class="bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center min-w-[180px]">
                         <span id="btn-text">Publish Directly</span>
@@ -139,13 +120,12 @@
                     </button>
                 </div>
             </section>
-
             <section class="mb-12 bg-white p-8 rounded-[2.5rem] border border-orange-100 shadow-sm">
                 <h3 class="text-xl font-black mb-6 flex items-center text-gray-900">
-                    <i class="fa-solid fa-star text-orange-400 mr-2"></i> 
+                    <i class="fa-solid fa-star text-orange-400 mr-2"></i>
                     <span>Carousel / Featured Banner</span>
                 </h3>
-                
+               
                 <div class="mb-8 p-6 bg-orange-50/50 rounded-3xl border border-dashed border-orange-200">
                     <p class="text-xs font-bold text-orange-600 mb-4 uppercase tracking-widest">Update Featured Banner Image</p>
                     <div class="flex flex-col sm:flex-row gap-3">
@@ -161,10 +141,8 @@
                         </button>
                     </div>
                 </div>
-
                 <div id="carousel-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
             </section>
-
             <div class="grid grid-cols-2 gap-4 mb-12">
                 <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Incoming</p>
@@ -175,14 +153,12 @@
                     <h3 id="stat-live" class="text-3xl font-black text-emerald-500">0</h3>
                 </div>
             </div>
-
             <section class="mb-16">
                 <h3 class="text-2xl font-black mb-8 flex items-center">
                     <span class="w-2 h-6 bg-orange-400 rounded-full mr-3"></span> Review Queue
                 </h3>
                 <div id="pending-list" class="space-y-4"></div>
             </section>
-
             <section>
                 <h3 class="text-2xl font-black mb-8 flex items-center text-gray-400">
                     <span class="w-2 h-6 bg-gray-300 rounded-full mr-3"></span> Active Records
@@ -191,7 +167,6 @@
             </section>
         </main>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, remove, push, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -209,7 +184,7 @@
         };
 
         const CLOUD_NAME = "dsbzvgotw";
-        const UPLOAD_PRESET = "modiba"; 
+        const UPLOAD_PRESET = "modiba";
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -219,13 +194,10 @@
 
         let selectedFile = null;
         let selectedBannerFile = null;
-        let selectedApkFile = null;
         let selectedCarouselFile = null;
         let editingId = null;
         let currentIconUrl = null;
         let currentBannerUrl = null;
-        let currentApkUrl = null;
-        let pendingDeleteId = null;
 
         window.openModal = (msg) => {
             const modal = document.getElementById('success-modal');
@@ -280,11 +252,6 @@
             if (selectedBannerFile) document.getElementById('banner-label').innerText = selectedBannerFile.name;
         };
 
-        document.getElementById('admin-apk-file').onchange = (e) => {
-            selectedApkFile = e.target.files[0];
-            if (selectedApkFile) document.getElementById('apk-label').innerText = selectedApkFile.name;
-        };
-
         document.getElementById('carousel-custom-file').onchange = (e) => {
             selectedCarouselFile = e.target.files[0];
             if (selectedCarouselFile) document.getElementById('carousel-file-label').innerText = selectedCarouselFile.name;
@@ -301,55 +268,24 @@
             return data.secure_url;
         }
 
-        function uploadApkToFirebase(file) {
-            return new Promise((resolve, reject) => {
-                const storageRef = sRef(storage, 'apks/' + Date.now() + '_' + file.name);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                const progressContainer = document.getElementById('progress-container');
-                const progressFill = document.getElementById('progress-fill');
-
-                progressContainer.classList.remove('hidden');
-
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        progressFill.style.width = progress + "%";
-                        progressFill.innerText = "UPLOADING APK: " + progress + "%";
-                    }, 
-                    (error) => {
-                        progressContainer.classList.add('hidden');
-                        reject(error);
-                    }, 
-                    () => {
-                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                            setTimeout(() => progressContainer.classList.add('hidden'), 500);
-                            resolve(downloadURL);
-                        });
-                    }
-                );
-            });
-        }
-
         const resetForm = () => {
             editingId = null;
             currentIconUrl = null;
             currentBannerUrl = null;
-            currentApkUrl = null;
             selectedFile = null;
             selectedBannerFile = null;
-            selectedApkFile = null;
+            selectedCarouselFile = null;
             document.getElementById('admin-app-name').value = "";
             document.getElementById('admin-app-url').value = "";
             document.getElementById('admin-app-desc').value = "";
             document.getElementById('admin-app-cat').value = "General";
             document.getElementById('file-label').innerText = "App Icon";
             document.getElementById('banner-label').innerText = "App Banner";
-            document.getElementById('apk-label').innerText = "Upload APK (Firebase)";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Fast Publish App";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('progress-container').classList.add('hidden');
-            
+           
             const btn = document.getElementById('admin-direct-add');
             btn.disabled = false;
             btn.innerHTML = `<span>Publish Directly</span>`;
@@ -357,41 +293,33 @@
 
         document.getElementById('btn-cancel-edit').onclick = resetForm;
 
-        // UPDATED: CONCURRENT UPLOAD LOGIC FOR SPEED
         document.getElementById('admin-direct-add').onclick = async () => {
             const btn = document.getElementById('admin-direct-add');
             const name = document.getElementById('admin-app-name').value;
-            const manualUrl = document.getElementById('admin-app-url').value;
+            const manualUrl = document.getElementById('admin-app-url').value.trim();
             const desc = document.getElementById('admin-app-desc').value;
             const cat = document.getElementById('admin-app-cat').value;
 
             if(!name) return showToast("App Name is required", "bg-orange-500");
+            if(!manualUrl) return showToast("Download URL is required", "bg-orange-500");
 
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-bolt fa-spin mr-2"></i> Fast Syncing...`;
 
             try {
-                // Launch all uploads simultaneously for speed
                 const iconPromise = selectedFile ? uploadToCloudinary(selectedFile) : Promise.resolve(currentIconUrl);
                 const bannerPromise = selectedBannerFile ? uploadToCloudinary(selectedBannerFile) : Promise.resolve(currentBannerUrl);
-                const apkPromise = selectedApkFile ? uploadApkToFirebase(selectedApkFile) : Promise.resolve(currentApkUrl || manualUrl);
 
-                const [iconUrl, bannerUrl, apkUrl] = await Promise.all([iconPromise, bannerPromise, apkPromise]);
-
-                if(!apkUrl) {
-                    btn.disabled = false;
-                    btn.innerHTML = `Publish Directly`;
-                    return showToast("Missing APK file or URL", "bg-orange-500");
-                }
+                const [iconUrl, bannerUrl] = await Promise.all([iconPromise, bannerPromise]);
 
                 const appData = {
-                    name: name, 
+                    name: name,
                     description: desc || "No description provided.",
-                    icon: iconUrl || "https://via.placeholder.com/150", 
-                    banner: bannerUrl || iconUrl || "https://via.placeholder.com/600x300", 
-                    downloadUrl: apkUrl, // This ensures it appears for users
-                    category: cat || "General", 
-                    isConfirmed: true, 
+                    icon: iconUrl || "https://via.placeholder.com/150",
+                    banner: bannerUrl || iconUrl || "https://via.placeholder.com/600x300",
+                    downloadUrl: manualUrl,
+                    category: cat || "General",
+                    isConfirmed: true,
                     rating: "5.0",
                     timestamp: Date.now()
                 };
@@ -426,23 +354,21 @@
             const appId = document.getElementById('carousel-app-select').value;
             const btn = document.getElementById('btn-upload-carousel');
             const btnText = document.getElementById('carousel-btn-text');
-            
+           
             if(!appId) return showToast("Select an application first", "bg-orange-500");
-            
+           
             btn.disabled = true;
             btnText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Syncing...`;
 
             try {
                 const snapshot = await get(ref(db, `apps/${appId}`));
                 if(!snapshot.exists()) throw new Error("App not found");
-                
+               
                 const appData = snapshot.val();
                 let finalBanner = appData.banner;
-
                 if(selectedCarouselFile) {
                     finalBanner = await uploadToCloudinary(selectedCarouselFile);
                 }
-
                 await set(ref(db, `featured/${appId}`), {
                     name: appData.name,
                     description: appData.description,
@@ -452,12 +378,11 @@
                     downloadUrl: appData.downloadUrl,
                     appId: appId
                 });
-
                 window.openModal(`Carousel item for ${appData.name} updated.`);
                 selectedCarouselFile = null;
                 document.getElementById('carousel-file-label').innerText = "Custom Image";
                 document.getElementById('carousel-app-select').value = "";
-                
+               
             } catch (err) {
                 showToast("Firebase Error: " + err.message, "bg-red-500");
             } finally {
@@ -475,7 +400,7 @@
                         name: appData.name,
                         description: appData.description || "",
                         icon: appData.icon || "",
-                        banner: appData.banner || appData.icon || "", 
+                        banner: appData.banner || appData.icon || "",
                         category: appData.category || "General",
                         downloadUrl: appData.downloadUrl || "",
                         appId: id
@@ -522,13 +447,12 @@
             const pList = document.getElementById('pending-list');
             const aList = document.getElementById('active-list');
             const select = document.getElementById('carousel-app-select');
-            
+           
             if(!pList || !aList) return;
             pList.innerHTML = ""; aList.innerHTML = "";
             select.innerHTML = `<option value="">Select App to Feature</option>`;
-            
+           
             let pCount = 0; let aCount = 0;
-
             if(data) {
                 const sortedIds = Object.keys(data).sort((a,b) => (data[b].timestamp || 0) - (data[a].timestamp || 0));
                 sortedIds.forEach(id => {
@@ -539,7 +463,6 @@
                         opt.innerText = item.name;
                         select.appendChild(opt);
                     }
-
                     const card = `
                         <div class="card-entry bg-white p-4 rounded-[1.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
                             <div class="flex items-center space-x-4">
@@ -572,19 +495,17 @@
                     editingId = id;
                     currentIconUrl = data.icon || "";
                     currentBannerUrl = data.banner || "";
-                    currentApkUrl = data.downloadUrl || "";
                     document.getElementById('admin-app-name').value = data.name || "";
                     document.getElementById('admin-app-url').value = data.downloadUrl || "";
                     document.getElementById('admin-app-desc').value = data.description || "";
                     document.getElementById('admin-app-cat').value = data.category || "General";
                     document.getElementById('file-label').innerText = "Update Icon (Optional)";
                     document.getElementById('banner-label').innerText = "Update Banner (Optional)";
-                    document.getElementById('apk-label').innerText = "Update APK (Optional)";
-                    
+                   
                     const btn = document.getElementById('admin-direct-add');
                     btn.disabled = false;
                     btn.innerHTML = `<span>Update Application</span>`;
-                    
+                   
                     document.getElementById('form-title').innerText = "Editing: " + data.name;
                     document.getElementById('btn-cancel-edit').classList.remove('hidden');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -596,7 +517,7 @@
             update(ref(db, `apps/${id}`), { isConfirmed: true, timestamp: Date.now() });
             window.openModal("Approved and moved to Live Store.");
         };
-        
+       
         window.deleteApp = (id) => {
             pendingDeleteId = id;
             const modal = document.getElementById('delete-modal');
@@ -605,16 +526,16 @@
             setTimeout(() => modal.classList.add('opacity-100'), 10);
         };
 
+        let pendingDeleteId = null;
         document.getElementById('confirm-delete-btn').onclick = async () => {
             if(pendingDeleteId) {
                 await remove(ref(db, `apps/${pendingDeleteId}`));
-                await remove(ref(db, `featured/${pendingDeleteId}`)); 
+                await remove(ref(db, `featured/${pendingDeleteId}`));
                 closeModal('delete-modal');
                 showToast("App Deleted Successfully", "bg-red-500");
                 pendingDeleteId = null;
             }
         };
-
     </script>
 </body>
 </html>
