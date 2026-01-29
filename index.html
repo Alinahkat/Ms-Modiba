@@ -101,7 +101,14 @@
                         </button>
                     </div>
 
-                    <input type="text" id="admin-app-url" placeholder="Download URL" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                    <div class="relative">
+                        <input type="file" id="admin-apk-file" accept=".apk" class="hidden">
+                        <button onclick="document.getElementById('admin-apk-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-blue-200">
+                            <i class="fa-solid fa-box-archive mr-2"></i> <span id="apk-label">Upload APK File</span>
+                        </button>
+                    </div>
+
+                    <input type="text" id="admin-app-url" placeholder="Manual Download URL (Optional)" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
                     
                     <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
                         <option value="General">Select Category</option>
@@ -113,7 +120,7 @@
                         <option value="Entertainment">Entertainment</option>
                     </select>
 
-                    <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none"></textarea>
+                    <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none lg:col-span-3"></textarea>
                 </div>
                 <div class="flex flex-col md:flex-row gap-3 mt-4">
                     <button id="admin-direct-add" class="bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center min-w-[180px]">
@@ -202,10 +209,12 @@
 
         let selectedFile = null;
         let selectedBannerFile = null;
+        let selectedApkFile = null;
         let selectedCarouselFile = null;
         let editingId = null;
         let currentIconUrl = null;
         let currentBannerUrl = null;
+        let currentApkUrl = null;
         let pendingDeleteId = null;
 
         window.openModal = (msg) => {
@@ -261,16 +270,29 @@
             if (selectedBannerFile) document.getElementById('banner-label').innerText = selectedBannerFile.name;
         };
 
+        document.getElementById('admin-apk-file').onchange = (e) => {
+            selectedApkFile = e.target.files[0];
+            if (selectedApkFile) document.getElementById('apk-label').innerText = selectedApkFile.name;
+        };
+
         document.getElementById('carousel-custom-file').onchange = (e) => {
             selectedCarouselFile = e.target.files[0];
             if (selectedCarouselFile) document.getElementById('carousel-file-label').innerText = selectedCarouselFile.name;
         };
 
-        async function uploadToCloudinary(file) {
+        // ENHANCED CLOUDINARY UPLOAD FOR BOTH IMAGES AND RAW APKs
+        async function uploadToCloudinary(file, isRaw = false) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', UPLOAD_PRESET);
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+            
+            // If it's an APK, we upload as "raw" resource type
+            const resourceType = isRaw ? 'raw' : 'image';
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { 
+                method: 'POST', 
+                body: formData 
+            });
+            
             if(!res.ok) throw new Error("Upload Failed");
             const data = await res.json();
             return data.secure_url;
@@ -280,14 +302,17 @@
             editingId = null;
             currentIconUrl = null;
             currentBannerUrl = null;
+            currentApkUrl = null;
             selectedFile = null;
             selectedBannerFile = null;
+            selectedApkFile = null;
             document.getElementById('admin-app-name').value = "";
             document.getElementById('admin-app-url').value = "";
             document.getElementById('admin-app-desc').value = "";
             document.getElementById('admin-app-cat').value = "General";
             document.getElementById('file-label').innerText = "Upload App Icon";
             document.getElementById('banner-label').innerText = "Upload App Banner";
+            document.getElementById('apk-label').innerText = "Upload APK File";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -302,14 +327,14 @@
         document.getElementById('admin-direct-add').onclick = async () => {
             const btn = document.getElementById('admin-direct-add');
             const name = document.getElementById('admin-app-name').value;
-            const url = document.getElementById('admin-app-url').value;
+            const manualUrl = document.getElementById('admin-app-url').value;
             const desc = document.getElementById('admin-app-desc').value;
             const cat = document.getElementById('admin-app-cat').value;
 
-            if(!name || !url) return showToast("Name and URL are required", "bg-orange-500");
+            if(!name) return showToast("App Name is required", "bg-orange-500");
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing Files...`;
 
             try {
                 let iconUrl = currentIconUrl || "";
@@ -318,12 +343,25 @@
                 let bannerUrl = currentBannerUrl || "";
                 if(selectedBannerFile) bannerUrl = await uploadToCloudinary(selectedBannerFile);
 
+                // Handle APK Upload
+                let apkUrl = currentApkUrl || manualUrl || "";
+                if(selectedApkFile) {
+                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Uploading APK...`;
+                    apkUrl = await uploadToCloudinary(selectedApkFile, true);
+                }
+
+                if(!apkUrl) {
+                    btn.disabled = false;
+                    btn.innerHTML = `Publish Directly`;
+                    return showToast("Please upload an APK or provide a URL", "bg-orange-500");
+                }
+
                 const appData = {
                     name: name || "Unknown App", 
                     description: desc || "No description provided.",
                     icon: iconUrl || "https://via.placeholder.com/150", 
                     banner: bannerUrl || iconUrl || "https://via.placeholder.com/600x300", 
-                    downloadUrl: url || "#", 
+                    downloadUrl: apkUrl, 
                     category: cat || "General", 
                     isConfirmed: true, 
                     rating: "5.0"
@@ -354,7 +392,6 @@
             }
         };
 
-        // CAROUSEL CUSTOM UPLOAD LOGIC WITH FIREBASE SET & SUCCESS MODAL
         document.getElementById('btn-upload-carousel').onclick = async () => {
             const appId = document.getElementById('carousel-app-select').value;
             const btn = document.getElementById('btn-upload-carousel');
@@ -376,7 +413,6 @@
                     finalBanner = await uploadToCloudinary(selectedCarouselFile);
                 }
 
-                // Update/Set on Firebase
                 await set(ref(db, `featured/${appId}`), {
                     name: appData.name,
                     description: appData.description,
@@ -386,10 +422,7 @@
                     appId: appId
                 });
 
-                // Trigger Success Modal
                 window.openModal(`Carousel item for ${appData.name} updated on Firebase.`);
-                
-                // Reset Carousel Input
                 selectedCarouselFile = null;
                 document.getElementById('carousel-file-label').innerText = "Custom Image";
                 document.getElementById('carousel-app-select').value = "";
@@ -507,12 +540,14 @@
                     editingId = id;
                     currentIconUrl = data.icon || "";
                     currentBannerUrl = data.banner || "";
+                    currentApkUrl = data.downloadUrl || "";
                     document.getElementById('admin-app-name').value = data.name || "";
                     document.getElementById('admin-app-url').value = data.downloadUrl || "";
                     document.getElementById('admin-app-desc').value = data.description || "";
                     document.getElementById('admin-app-cat').value = data.category || "General";
                     document.getElementById('file-label').innerText = "Change Icon (Optional)";
                     document.getElementById('banner-label').innerText = "Change Banner (Optional)";
+                    document.getElementById('apk-label').innerText = "Change APK (Optional)";
                     
                     const btn = document.getElementById('admin-direct-add');
                     btn.disabled = false;
