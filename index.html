@@ -19,6 +19,10 @@
         .modal-animate { transition: opacity 0.3s ease; }
         .modal-content-animate { transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .flex .modal-content-animate { transform: scale(1); }
+        
+        /* Progress Bar Animation */
+        #progress-container { transition: all 0.3s ease; }
+        #progress-fill { transition: width 0.4s ease-out; }
     </style>
 </head>
 <body class="pb-20">
@@ -103,12 +107,12 @@
 
                     <div class="relative">
                         <input type="file" id="admin-apk-file" accept=".apk" class="hidden">
-                        <button onclick="document.getElementById('admin-apk-file').click()" class="w-full text-left px-5 py-3 bg-gray-100 rounded-2xl text-sm text-gray-500 truncate hover:bg-gray-200 transition border-2 border-dashed border-blue-200">
-                            <i class="fa-solid fa-box-archive mr-2"></i> <span id="apk-label">Upload APK File</span>
+                        <button onclick="document.getElementById('admin-apk-file').click()" class="w-full text-left px-5 py-3 bg-blue-50 rounded-2xl text-sm text-blue-600 truncate hover:bg-blue-100 transition border-2 border-dashed border-blue-200">
+                            <i class="fa-solid fa-file-zipper mr-2"></i> <span id="apk-label">Upload APK to Firebase</span>
                         </button>
                     </div>
 
-                    <input type="text" id="admin-app-url" placeholder="Manual Download URL (Optional)" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+                    <input type="text" id="admin-app-url" placeholder="Manual URL (Optional)" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
                     
                     <select id="admin-app-cat" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-gray-500">
                         <option value="General">Select Category</option>
@@ -120,9 +124,14 @@
                         <option value="Entertainment">Entertainment</option>
                     </select>
 
-                    <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none lg:col-span-3"></textarea>
+                    <textarea id="admin-app-desc" placeholder="Application Description" rows="1" class="px-5 py-3 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm resize-none"></textarea>
                 </div>
-                <div class="flex flex-col md:flex-row gap-3 mt-4">
+
+                <div id="progress-container" class="hidden mt-6 bg-gray-100 h-4 rounded-full overflow-hidden">
+                    <div id="progress-fill" class="bg-blue-600 h-full w-0 flex items-center justify-center text-[10px] text-white font-bold">0%</div>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-3 mt-6">
                     <button id="admin-direct-add" class="bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-sm hover:bg-blue-700 transition transform active:scale-95 shadow-lg shadow-blue-100 flex items-center justify-center min-w-[180px]">
                         <span id="btn-text">Publish Directly</span>
                     </button>
@@ -188,6 +197,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, update, remove, push, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD_lFs83fyT6pNcNECGueOYJeedGVKY7GA",
@@ -205,6 +215,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
+        const storage = getStorage(app);
         const provider = new GoogleAuthProvider();
 
         let selectedFile = null;
@@ -280,22 +291,44 @@
             if (selectedCarouselFile) document.getElementById('carousel-file-label').innerText = selectedCarouselFile.name;
         };
 
-        // ENHANCED CLOUDINARY UPLOAD FOR BOTH IMAGES AND RAW APKs
-        async function uploadToCloudinary(file, isRaw = false) {
+        async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', UPLOAD_PRESET);
-            
-            // If it's an APK, we upload as "raw" resource type
-            const resourceType = isRaw ? 'raw' : 'image';
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`, { 
-                method: 'POST', 
-                body: formData 
-            });
-            
-            if(!res.ok) throw new Error("Upload Failed");
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+            if(!res.ok) throw new Error("Image Upload Failed");
             const data = await res.json();
             return data.secure_url;
+        }
+
+        // UPDATED: Upload to Firebase with Progress Tracking
+        function uploadApkToFirebase(file) {
+            return new Promise((resolve, reject) => {
+                const storageRef = sRef(storage, 'apks/' + Date.now() + '_' + file.name);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                const progressContainer = document.getElementById('progress-container');
+                const progressFill = document.getElementById('progress-fill');
+
+                progressContainer.classList.remove('hidden');
+
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        progressFill.style.width = progress + "%";
+                        progressFill.innerText = progress + "%";
+                    }, 
+                    (error) => {
+                        progressContainer.classList.add('hidden');
+                        reject(error);
+                    }, 
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            setTimeout(() => progressContainer.classList.add('hidden'), 1000);
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            });
         }
 
         const resetForm = () => {
@@ -312,10 +345,12 @@
             document.getElementById('admin-app-cat').value = "General";
             document.getElementById('file-label').innerText = "Upload App Icon";
             document.getElementById('banner-label').innerText = "Upload App Banner";
-            document.getElementById('apk-label').innerText = "Upload APK File";
+            document.getElementById('apk-label').innerText = "Upload APK to Firebase";
             document.getElementById('btn-text').innerText = "Publish Directly";
             document.getElementById('form-title').innerText = "Add App to Database";
             document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+            document.getElementById('progress-fill').style.width = "0%";
             
             const btn = document.getElementById('admin-direct-add');
             btn.disabled = false;
@@ -334,7 +369,7 @@
             if(!name) return showToast("App Name is required", "bg-orange-500");
 
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing Files...`;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Initializing...`;
 
             try {
                 let iconUrl = currentIconUrl || "";
@@ -343,11 +378,10 @@
                 let bannerUrl = currentBannerUrl || "";
                 if(selectedBannerFile) bannerUrl = await uploadToCloudinary(selectedBannerFile);
 
-                // Handle APK Upload
                 let apkUrl = currentApkUrl || manualUrl || "";
                 if(selectedApkFile) {
-                    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Uploading APK...`;
-                    apkUrl = await uploadToCloudinary(selectedApkFile, true);
+                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-bounce mr-2"></i> Sending APK...`;
+                    apkUrl = await uploadApkToFirebase(selectedApkFile);
                 }
 
                 if(!apkUrl) {
@@ -382,7 +416,7 @@
                     window.openModal(`${name} updated successfully.`);
                 } else {
                     await push(ref(db, 'apps'), appData);
-                    window.openModal(`${name} published to Live Store.`);
+                    window.openModal(`${name} published with Firebase APK.`);
                 }
                 resetForm();
             } catch (e) {
@@ -422,7 +456,7 @@
                     appId: appId
                 });
 
-                window.openModal(`Carousel item for ${appData.name} updated on Firebase.`);
+                window.openModal(`Carousel item for ${appData.name} updated.`);
                 selectedCarouselFile = null;
                 document.getElementById('carousel-file-label').innerText = "Custom Image";
                 document.getElementById('carousel-app-select').value = "";
